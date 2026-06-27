@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="Cache-Control" content="no-cache">
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="mobile-web-app-capable" content="yes">
+
+        <link rel="apple-touch-icon" href="logo.png">
+        <link rel="icon" href="logo.png">
+
+        <title>WebGL Fluid Simulation</title>
+        <meta name="description" content="A WebGL fluid simulation that works in mobile browsers.">
+
+        <meta property="og:type" content="website">
+        <meta property="og:title" content="Webgl Fluid Simulation">
+        <meta property="og:description" content="A WebGL fluid simulation that works in mobile browsers.">
+        <meta property="og:url" content="https://paveldogreat.github.io/WebGL-Fluid-Simulation/">
+        <meta property="og:image" content="https://paveldogreat.github.io/WebGL-Fluid-Simulation/logo.png">
+
+        <script type="text/javascript" src="dat.gui.min.js"></script>
+        <style>
+            @font-face {
+                font-family: 'iconfont';
+                src: url('iconfont.ttf') format('truetype');
+            }
+
+            * {
+                user-select: none;
+            }
+
+            html, body {
+                overflow: hidden;
+                background-color: #000;
+            }
+
+            body {
+                margin: 0;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+            }
+
+            canvas {
+                width: 100%;
+                height: 100%;
+            }
+
+            .dg {
+                opacity: 0.9;
+            }
+
+            .dg .property-name {
+                overflow: visible;
+            }
+
+            .bigFont {
+                font-size: 150%;
+                color: #8C8C8C;
+            }
+
+            .cr.function.appBigFont {
+                font-size: 150%;
+                line-height: 27px;
+                color: #A5F8D3;
+                background-color: #023C40;
+            }
+
+            .cr.function.appBigFont .property-name {
+                float: none;
+            }
+
+            .cr.function.appBigFont .icon {
+                position: sticky;
+                bottom: 27px;
+            }
+
+            .icon {
+                font-family: 'iconfont';
+                font-size: 130%;
+                float: right;
+            }
+
+            .twitter:before {
+                content: 'a';
+            }
+
+            .github:before {
+                content: 'b';
+            }
+
+            .app:before {
+                content: 'c';
+            }
+
+            .discord:before {
+                content: 'd';
+            }
+
+            .promo {
+                display: none;
+                /* display: table; */
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 1;
+                overflow: auto;
+                color: lightblue;
+                background-color: rgba(0,0,0,0.4);
+                animation: promo-appear-animation 0.35s ease-out;
+            }
+
+            .promo-middle {
+                display: table-cell;
+                vertical-align: middle;
+            }
+
+            .promo-content {
+                width: 80vw;
+                height: 80vh;
+                max-width: 80vh;
+                max-height: 80vw;
+                margin: auto;
+                padding: 0;
+                font-size: 2.8vmax;
+                font-family: Futura, "Trebuchet MS", Arial, sans-serif;
+                text-align: center;
+                background-image: url("promo_back.png");
+                background-position: center;
+                background-repeat: no-repeat;
+                background-size: cover;
+                border-radius: 15px;
+                box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+            }
+
+            .promo-header {
+                height: 10%;
+                padding: 2px 16px;
+            }
+
+            .promo-close {
+                width: 10%;
+                height: 100%;
+                text-align: left;
+                float: left;
+                font-size: 1.3em;
+                /* transition: 0.2s; */
+            }
+
+            .promo-close:hover {
+                /* transform: scale(1.25); */
+                cursor: pointer;
+            }
+
+            .promo-body {
+                padding: 8px 16px 16px 16px;
+                margin: auto;
+            }
+
+            .promo-body p {
+                margin-top: 0;
+                mix-blend-mode: color-dodge;
+            }
+
+            .link {
+                width: 100%;
+                display: inline-block;
+            }
+
+            .link img {
+                width: 100%;
+            }
+
+            @keyframes promo-appear-animation {
+                0% {
+                    transform: scale(2.0);
+                    opacity: 0;
+                }
+                100% {
+                    transform: scale(1.0);
+                    opacity: 1;
+                }
+            }
+
+            .ebru-info-button {
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                z-index: 2100;
+                width: 48px;
+                height: 48px;
+                padding: 0;
+                border: 4px solid #171717;
+                border-radius: 50%;
+                background: #ff4fa3;
+                color: #171717;
+                box-shadow: 5px 5px 0 #171717;
+                font: 900 27px/1 Arial, sans-serif;
+                cursor: pointer;
+                transition: transform 120ms ease, box-shadow 120ms ease;
+            }
+
+            .ebru-info-button:hover {
+                transform: translate(-2px, -2px) rotate(-5deg);
+                box-shadow: 7px 7px 0 #171717;
+            }
+
+            .ebru-info-button:active {
+                transform: translate(3px, 3px);
+                box-shadow: 2px 2px 0 #171717;
+            }
+
+            .ebru-info-overlay {
+                position: fixed;
+                inset: 0;
+                z-index: 3000;
+                display: none;
+                place-items: center;
+                padding: 24px;
+                box-sizing: border-box;
+                background: rgba(12, 12, 18, 0.42);
+                font-family: Arial, Helvetica, sans-serif;
+            }
+
+            .ebru-info-overlay.is-open {
+                display: grid;
+                animation: ebru-info-fade 180ms ease-out;
+            }
+
+            .ebru-info-card {
+                position: relative;
+                width: min(720px, 86vw);
+                max-height: min(620px, 84vh);
+                overflow: auto;
+                box-sizing: border-box;
+                padding: 30px;
+                border: 5px solid #171717;
+                border-radius: 4px;
+                background: #ffe45e;
+                color: #171717;
+                box-shadow: 14px 14px 0 #18c8d8;
+                transform: rotate(-0.7deg);
+            }
+
+            .ebru-info-card::before {
+                content: "HOW TO";
+                position: absolute;
+                top: 17px;
+                left: -13px;
+                padding: 5px 13px;
+                border: 3px solid #171717;
+                background: #ff4fa3;
+                font-size: 12px;
+                font-weight: 900;
+                letter-spacing: 0.16em;
+                transform: rotate(-5deg);
+            }
+
+            .ebru-info-close {
+                position: absolute;
+                top: 13px;
+                right: 13px;
+                width: 39px;
+                height: 39px;
+                padding: 0;
+                border: 3px solid #171717;
+                border-radius: 50%;
+                background: #fff;
+                color: #171717;
+                font: 900 25px/1 Arial, sans-serif;
+                cursor: pointer;
+                transition: transform 120ms ease;
+            }
+
+            .ebru-info-close:hover {
+                transform: rotate(9deg) scale(1.08);
+            }
+
+            .ebru-info-title {
+                margin: 11px 48px 7px 0;
+                font-size: clamp(34px, 6vw, 64px);
+                font-weight: 1000;
+                line-height: 0.88;
+                letter-spacing: -0.065em;
+                text-transform: uppercase;
+                text-shadow: 4px 4px 0 #fff;
+            }
+
+            .ebru-info-lead {
+                display: inline-block;
+                margin: 5px 0 22px;
+                padding: 6px 10px;
+                border: 3px solid #171717;
+                background: #171717;
+                color: #fff;
+                font-size: 13px;
+                font-weight: 800;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                transform: rotate(1deg);
+            }
+
+            .ebru-info-steps {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 12px;
+            }
+
+            .ebru-info-step {
+                min-height: 108px;
+                box-sizing: border-box;
+                padding: 15px 16px;
+                border: 3px solid #171717;
+                background: #fff;
+                box-shadow: 5px 5px 0 #171717;
+            }
+
+            .ebru-info-step:nth-child(2) {
+                background: #ff78b8;
+                transform: rotate(1deg);
+            }
+
+            .ebru-info-step:nth-child(3) {
+                background: #66e1eb;
+                transform: rotate(-1deg);
+            }
+
+            .ebru-info-step:nth-child(4) {
+                background: #fff;
+                transform: rotate(0.7deg);
+            }
+
+            .ebru-info-step strong {
+                display: block;
+                margin-bottom: 7px;
+                font-size: 18px;
+                font-weight: 900;
+                text-transform: uppercase;
+            }
+
+            .ebru-info-step p {
+                margin: 0;
+                font-size: 14px;
+                font-weight: 700;
+                line-height: 1.35;
+            }
+
+            .ebru-info-bang {
+                color: #e71d36;
+                font-size: 1.2em;
+            }
+
+            @keyframes ebru-info-fade {
+                from {
+                    opacity: 0;
+                    transform: scale(0.94);
+                }
+                to {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+            }
+
+            @media (max-width: 600px) {
+                .ebru-info-overlay {
+                    padding: 16px;
+                }
+
+                .ebru-info-card {
+                    width: 90vw;
+                    max-height: 86vh;
+                    padding: 26px 20px 22px;
+                    box-shadow: 9px 9px 0 #18c8d8;
+                }
+
+                .ebru-info-steps {
+                    grid-template-columns: 1fr;
+                }
+
+                .ebru-info-step {
+                    min-height: auto;
+                }
+            }
+        </style>
+        <script>
+            window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+            ga('create', 'UA-105392568-1', 'auto');
+            ga('send', 'pageview');
+        </script>
+        <script async src="https://www.google-analytics.com/analytics.js"></script>
+    </head>
+    <body>
+        <canvas></canvas>
+
+        <button class="ebru-info-button" type="button" aria-label="Open instructions" aria-controls="ebru-info" aria-expanded="true">i</button>
+
+        <div class="ebru-info-overlay is-open" id="ebru-info" role="dialog" aria-modal="true" aria-labelledby="ebru-info-title">
+            <section class="ebru-info-card">
+                <button class="ebru-info-close" type="button" aria-label="Close instructions">&times;</button>
+                <h1 class="ebru-info-title" id="ebru-info-title">Make Ebru<span class="ebru-info-bang">!</span></h1>
+                <p class="ebru-info-lead">Turn on Camera and show one hand</p>
+
+                <div class="ebru-info-steps">
+                    <article class="ebru-info-step">
+                        <strong>Move the Paint</strong>
+                        <p>Pinch thumb + index finger. Hold and move to guide the ebru awl.</p>
+                    </article>
+                    <article class="ebru-info-step">
+                        <strong>Drop Paint</strong>
+                        <p>Pinch thumb + middle finger once to place a paint drop.</p>
+                    </article>
+                    <article class="ebru-info-step">
+                        <strong>Pick a Color</strong>
+                        <p>Choose a swatch or make a custom color in the Paint Color palette.</p>
+                    </article>
+                    <article class="ebru-info-step">
+                        <strong>Customize</strong>
+                        <p>Use the panel on the right to tune the flow, background, and capture.</p>
+                    </article>
+                </div>
+            </section>
+        </div>
+
+        <!-- Mother of God, pls forgive me -->
+        <div class="promo">
+            <div class="promo-middle">
+                <div class="promo-content">
+                    <div class="promo-header">
+                        <span class="promo-close">&times;</span>
+                    </div>
+                    <div class="promo-body">
+                        <p>Try Fluid Simulation app!</p>
+                        <div class="links-container">
+                            <a class="link" id="apple_link" target="_blank">
+                                <img class="link-img" alt="Download on the App Store" src="app_badge.png"/>
+                            </a>
+                            <a class="link" id="google_link" target="_blank">
+                                <img class="link-img" alt="Get it on Google Play" src="gp_badge.png"/>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            (function () {
+                const infoOverlay = document.getElementById('ebru-info');
+                const infoButton = document.querySelector('.ebru-info-button');
+                const infoClose = document.querySelector('.ebru-info-close');
+
+                function setInfoOpen(isOpen) {
+                    infoOverlay.classList.toggle('is-open', isOpen);
+                    infoOverlay.setAttribute('aria-hidden', String(!isOpen));
+                    infoButton.setAttribute('aria-expanded', String(isOpen));
+
+                    if (isOpen)
+                        infoClose.focus();
+                    else
+                        infoButton.focus();
+                }
+
+                infoButton.addEventListener('click', function () {
+                    setInfoOpen(true);
+                });
+
+                infoClose.addEventListener('click', function () {
+                    setInfoOpen(false);
+                });
+
+                infoOverlay.addEventListener('click', function (event) {
+                    if (event.target === infoOverlay)
+                        setInfoOpen(false);
+                });
+
+                window.addEventListener('keydown', function (event) {
+                    if (event.key === 'Escape' && infoOverlay.classList.contains('is-open'))
+                        setInfoOpen(false);
+                });
+            })();
+        </script>
+        <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.js" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js" crossorigin="anonymous"></script>
+        <script src="./script.js"></script>
+    </body>
+</html>
