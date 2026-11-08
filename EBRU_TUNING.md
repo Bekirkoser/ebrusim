@@ -18,8 +18,10 @@ interaction.
 - Pinch distance is normalized to hand size and uses separate start/release
   thresholds to avoid flicker.
 - Adaptive smoothing and a small dead zone suppress camera jitter.
-- A screen-space ebru awl cursor follows the smoothed contact point, changes
-  state without glow effects, and disappears when the hand is not detected.
+- The supplied transparent hand images follow the smoothed contact point.
+  Thumb/index pinches switch to the pinched hand with a subtle 180 ms squeeze.
+  Both images align their fingertip contact to the painting hotspot. Reduced
+  motion disables the transition, and tracking loss hides and resets the hand.
 - Dye-density dissipation is disabled (`DENSITY_DISSIPATION = 0.0`), so colors
   are not deliberately faded as simulation time passes.
 - Dye dissipation is also hard-locked to `0.0` in the advection pass and its UI

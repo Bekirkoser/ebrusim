@@ -1605,7 +1605,7 @@ function hashCode (s) {
     cameraReminder.hidden = true;
     document.body.appendChild(cameraReminder);
 
-    // UI: ebru awl showing the hand contact point on screen.
+    // The supplied hand images share a hotspot at the paint contact point.
     const cursorStyle = document.createElement('style');
     cursorStyle.textContent = `
         .ebru-camera-reminder {
@@ -1623,58 +1623,51 @@ function hashCode (s) {
             font: 14px/1.45 Arial, sans-serif;
             pointer-events: none;
         }
-        .ebru-biz-cursor {
+        .ebru-hand-cursor {
             position: fixed;
             left: 0;
             top: 0;
-            width: 20px;
-            height: 54px;
+            width: 0;
+            height: 0;
             display: none;
             pointer-events: none;
             z-index: 1000;
-            opacity: 0.72;
-            transform: translate(-50%, -100%) rotate(28deg);
-            transform-origin: 50% 100%;
+            opacity: 0.92;
             transition: opacity 100ms ease;
         }
-        .ebru-biz-handle {
+        .ebru-hand-cursor img {
             position: absolute;
-            left: 3px;
+            left: 0;
             top: 0;
-            width: 14px;
-            height: 22px;
-            border-radius: 8px 8px 5px 5px;
-            background: linear-gradient(90deg, #6c351d, #c47a42 48%, #74391e);
-            border: 1px solid rgba(255, 230, 190, 0.55);
-            box-sizing: border-box;
+            width: 140px;
+            height: auto;
+            max-width: none;
+            user-select: none;
+            transition: opacity 120ms ease;
         }
-        .ebru-biz-shaft {
-            position: absolute;
-            left: 8px;
-            top: 19px;
-            width: 4px;
-            height: 32px;
-            border-radius: 2px 2px 0 0;
-            background: linear-gradient(90deg, #65717a, #f4fbff 48%, #77828a);
-        }
-        .ebru-biz-tip {
-            position: absolute;
-            left: 7px;
-            bottom: 0;
-            width: 0;
-            height: 0;
-            border-left: 3px solid transparent;
-            border-right: 3px solid transparent;
-            border-top: 7px solid #eafaff;
-        }
-        .ebru-biz-cursor.active {
+        .ebru-hand-point {
+            transform: translate(-30.6%, -15.6%);
             opacity: 1;
         }
-        .ebru-biz-cursor.active .ebru-biz-tip {
-            border-top-color: #9b3f34;
+        .ebru-hand-pinch {
+            transform: translate(-29.3%, -46.9%);
+            opacity: 0;
         }
-        .ebru-biz-cursor.drop-mode .ebru-biz-tip {
-            border-top-color: var(--paint-color, #9b3f34);
+        .ebru-hand-cursor.active { opacity: 1; }
+        .ebru-hand-cursor.pinching .ebru-hand-point { opacity: 0; }
+        .ebru-hand-cursor.pinching .ebru-hand-pinch { opacity: 1; }
+        .ebru-hand-visual { transform-origin: 0 0; }
+        .ebru-hand-cursor.pinching .ebru-hand-visual {
+            animation: ebru-hand-close 180ms ease-out;
+        }
+        @keyframes ebru-hand-close {
+            0% { transform: scale(1); }
+            45% { transform: scale(0.96); }
+            100% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .ebru-hand-cursor, .ebru-hand-cursor img { transition: none; }
+            .ebru-hand-cursor.pinching .ebru-hand-visual { animation: none; }
         }
         .ebru-color-palette {
             position: fixed;
@@ -1729,9 +1722,13 @@ function hashCode (s) {
     document.head.appendChild(cursorStyle);
 
     const toolCursor = document.createElement('div');
-    toolCursor.className = 'ebru-biz-cursor';
+    toolCursor.className = 'ebru-hand-cursor';
     toolCursor.setAttribute('aria-hidden', 'true');
-    toolCursor.innerHTML = '<span class="ebru-biz-handle"></span><span class="ebru-biz-shaft"></span><span class="ebru-biz-tip"></span>';
+    toolCursor.innerHTML = `
+        <div class="ebru-hand-visual">
+            <img class="ebru-hand-point" src="assets/hand-point.png" alt="" draggable="false" width="1536" height="1024">
+            <img class="ebru-hand-pinch" src="assets/hand-pinch.png" alt="" draggable="false" width="1536" height="1024">
+        </div>`;
     document.body.appendChild(toolCursor);
 
     // Paint palette independent from the main dat.GUI panel.
@@ -1839,6 +1836,7 @@ function hashCode (s) {
         toolCursor.style.top = y + 'px';
         toolCursor.classList.toggle('active', mode !== 'tracking');
         toolCursor.classList.toggle('drop-mode', mode === 'drop');
+        toolCursor.classList.toggle('pinching', mode === 'move');
     }
 
     function distance(p1, p2) {
@@ -1940,6 +1938,7 @@ function hashCode (s) {
             prevX = -1;
             prevY = -1;
             toolCursor.style.display = 'none';
+            toolCursor.classList.remove('active', 'drop-mode', 'pinching');
             setLabel('SHOW YOUR HAND', false);
         }
     }
@@ -1951,6 +1950,7 @@ function hashCode (s) {
         prevX = -1;
         prevY = -1;
         toolCursor.style.display = 'none';
+        toolCursor.classList.remove('active', 'drop-mode', 'pinching');
     }
 
     async function stopCamera(showStatus = true) {
