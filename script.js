@@ -70,7 +70,7 @@ function pointerPrototype () {
     this.down = false;
     this.moved = false;
     this.color = [30, 0, 300];
-    // Hand tracking configures these settings for a fine ebru awl.
+    // Each input uses the shared ebru preset below.
     this.forceScale = 1.0;
     this.radiusScale = 1.0;
     this.maxDelta = Infinity;
@@ -78,6 +78,26 @@ function pointerPrototype () {
 }
 
 let pointers = [];
+
+function createEbruPointer(id) {
+    const pointer = new pointerPrototype();
+    pointer.id = id;
+    pointer.forceScale = 0.32;
+    pointer.radiusScale = 0.90;
+    pointer.maxDelta = 0.015;
+    pointer.addDye = false;
+    pointers.push(pointer);
+    return pointer;
+}
+
+function smoothContactPoint(rawX, rawY, prevX, prevY) {
+    const movement = prevX < 0 ? 0 : Math.hypot(rawX - prevX, rawY - prevY);
+    const smooth = Math.min(0.50, 0.22 + movement / 100);
+    const x = prevX < 0 ? rawX : prevX + (rawX - prevX) * smooth;
+    const y = prevY < 0 ? rawY : prevY + (rawY - prevY) * smooth;
+    return prevX >= 0 && Math.hypot(x - prevX, y - prevY) < 0.4
+        ? { x: prevX, y: prevY } : { x, y };
+}
 
 const { gl, ext } = getWebGLContext(canvas);
 
@@ -1150,6 +1170,7 @@ function updateColors (dt) {
 
 function applyInputs () {
     pointers.forEach(p => {
+        if (p.updateInput) p.updateInput();
         if (p.moved) {
             p.moved = false;
             splatPointer(p);
@@ -1364,8 +1385,7 @@ function splatPointer (pointer) {
     let deltaY = pointer.deltaY;
     const deltaLength = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-    // Camera tracking occasionally jumps by several pixels. Limit the impulse
-    // without changing its direction, so one noisy frame cannot sweep the tray.
+    // Limit large movements from either input without changing their direction.
     if (deltaLength > pointer.maxDelta) {
         const scale = pointer.maxDelta / deltaLength;
         deltaX *= scale;
@@ -1430,7 +1450,7 @@ function correctRadius (radius) {
     return radius;
 }
 
-// Paint interaction is driven exclusively by camera hand tracking.
+// Painting inputs share the ebru dynamics; P pauses the simulation.
 window.addEventListener('keydown', e => {
     if (e.code === 'KeyP')
         config.PAUSED = !config.PAUSED;
@@ -1461,6 +1481,9 @@ function updatePointerMoveData (pointer, posX, posY) {
 
 function updatePointerUpData (pointer) {
     pointer.down = false;
+    pointer.moved = false;
+    pointer.deltaX = 0;
+    pointer.deltaY = 0;
 }
 
 function correctDeltaX (delta) {
@@ -1598,31 +1621,9 @@ function hashCode (s) {
     ].join(';');
     document.body.appendChild(label);
 
-    const cameraReminder = document.createElement('div');
-    cameraReminder.className = 'ebru-camera-reminder';
-    cameraReminder.setAttribute('role', 'status');
-    cameraReminder.setAttribute('aria-live', 'polite');
-    cameraReminder.hidden = true;
-    document.body.appendChild(cameraReminder);
-
     // The supplied hand images share a hotspot at the paint contact point.
     const cursorStyle = document.createElement('style');
     cursorStyle.textContent = `
-        .ebru-camera-reminder {
-            position: fixed;
-            right: 20px;
-            bottom: 100px;
-            z-index: 1002;
-            max-width: min(260px, calc(100vw - 40px));
-            box-sizing: border-box;
-            padding: 13px 16px;
-            border: 1px solid rgba(224, 176, 131, 0.55);
-            border-radius: 12px;
-            background: rgba(42, 34, 30, 0.96);
-            color: #fff3e7;
-            font: 14px/1.45 Arial, sans-serif;
-            pointer-events: none;
-        }
         .ebru-hand-cursor {
             position: fixed;
             left: 0;
@@ -1782,16 +1783,83 @@ function hashCode (s) {
     customColorInput.addEventListener('input', () => selectPaintColor(customColorInput.value, null));
     toolCursor.style.setProperty('--paint-color', selectedPaintHex);
 
-    // Register the hand as the only interactive paint pointer.
+    // Both inputs use the same force, radius, movement cap and dye behavior.
     const HAND_POINTER_ID = 99;
-    let handPointer = new pointerPrototype();
-    handPointer.id = HAND_POINTER_ID;
-    // Ebru preset: a fine awl gently drags the existing paint film.
-    handPointer.forceScale = 0.32;
-    handPointer.radiusScale = 0.90;
-    handPointer.maxDelta = 0.015;
-    handPointer.addDye = false;
-    pointers.push(handPointer);
+    const handPointer = createEbruPointer(HAND_POINTER_ID);
+    const mousePointer = createEbruPointer(-1);
+    let mouseTarget = null;
+    let mouseX = -1, mouseY = -1;
+    canvas.style.cursor = 'grab';
+
+    function mousePosition(event) {
+        const rect = canvas.getBoundingClientRect();
+        return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    }
+
+    function mouseCanvasPosition(x, y) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+            x: Math.floor(Math.max(0, Math.min(1, x / rect.width)) * canvas.width),
+            y: Math.floor(Math.max(0, Math.min(1, y / rect.height)) * canvas.height)
+        };
+    }
+
+    function stopMouseDrag() {
+        updatePointerUpData(mousePointer);
+        mouseTarget = null;
+        mouseX = mouseY = -1;
+        canvas.style.cursor = 'grab';
+    }
+
+    // Sample the latest mouse position once per simulation frame so high-rate
+    // mouse events cannot overwrite an unconsumed movement delta.
+    mousePointer.updateInput = () => {
+        if (!mousePointer.down || !mouseTarget) return;
+        const point = smoothContactPoint(mouseTarget.x, mouseTarget.y, mouseX, mouseY);
+        mouseX = point.x;
+        mouseY = point.y;
+        const position = mouseCanvasPosition(mouseX, mouseY);
+        updatePointerMoveData(mousePointer, position.x, position.y);
+    };
+
+    canvas.addEventListener('mousedown', event => {
+        if (event.button !== 0 && event.button !== 2) return;
+        event.preventDefault();
+        if ((event.buttons & 3) === 3) {
+            stopMouseDrag();
+            return;
+        }
+        const point = mousePosition(event);
+        const position = mouseCanvasPosition(point.x, point.y);
+        if (event.button === 2) {
+            stopMouseDrag();
+            addPaintDrop(position.x, position.y);
+        } else {
+            mouseTarget = point;
+            mouseX = point.x;
+            mouseY = point.y;
+            updatePointerDownData(mousePointer, -1, position.x, position.y);
+            canvas.style.cursor = 'grabbing';
+        }
+    });
+
+    canvas.addEventListener('mousemove', event => {
+        if (!mousePointer.down) return;
+        if ((event.buttons & 3) !== 1) {
+            stopMouseDrag();
+            return;
+        }
+        mouseTarget = mousePosition(event);
+    });
+    canvas.addEventListener('contextmenu', event => event.preventDefault());
+    canvas.addEventListener('mouseleave', stopMouseDrag);
+    window.addEventListener('mouseup', event => {
+        if (event.button === 0) stopMouseDrag();
+    });
+    window.addEventListener('blur', stopMouseDrag);
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) stopMouseDrag();
+    });
 
     // Smoothing and independent gesture states.
     let prevX = -1, prevY = -1;
@@ -1802,27 +1870,10 @@ function hashCode (s) {
     let handsInstance = null;
     let cameraInstance = null;
     let mediaStream = null;
-    let cameraReminderTimer = null;
     const PINCH_START_RATIO = 0.34;
     const PINCH_RELEASE_RATIO = 0.46;
     const PINCH_START_DISTANCE = 0.055;
     const PINCH_RELEASE_DISTANCE = 0.075;
-    const TRACKING_DEAD_ZONE_PX = 0.4;
-
-    function hideCameraReminder() {
-        clearTimeout(cameraReminderTimer);
-        cameraReminderTimer = null;
-        cameraReminder.hidden = true;
-        cameraReminder.textContent = '';
-    }
-
-    canvas.addEventListener('click', () => {
-        if (camStarted) return;
-        clearTimeout(cameraReminderTimer);
-        cameraReminder.textContent = 'Turn on the camera to paint with your hand.';
-        cameraReminder.hidden = false;
-        cameraReminderTimer = setTimeout(hideCameraReminder, 3500);
-    });
 
     function setLabel(text, active) {
         label.style.display = 'block';
@@ -1884,15 +1935,7 @@ function hashCode (s) {
             const rawX = (1.0 - contactX) * window.innerWidth;
             const rawY = contactY * window.innerHeight;
 
-            const movement = prevX < 0 ? 0 : Math.hypot(rawX - prevX, rawY - prevY);
-            const smooth = Math.min(0.50, 0.22 + movement / 100);
-            let sx = prevX < 0 ? rawX : prevX + (rawX - prevX) * smooth;
-            let sy = prevY < 0 ? rawY : prevY + (rawY - prevY) * smooth;
-
-            if (prevX >= 0 && Math.hypot(sx - prevX, sy - prevY) < TRACKING_DEAD_ZONE_PX) {
-                sx = prevX;
-                sy = prevY;
-            }
+            const { x: sx, y: sy } = smoothContactPoint(rawX, rawY, prevX, prevY);
 
             const posX = scaleByPixelRatio(sx);
             const posY = scaleByPixelRatio(sy);
@@ -1990,7 +2033,6 @@ function hashCode (s) {
 
     async function startCamera() {
         if (camStarted) return;
-        hideCameraReminder();
         const session = ++cameraSession;
         camStarted = true;
         btn.textContent = '⏳ Loading…';

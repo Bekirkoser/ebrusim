@@ -6,10 +6,15 @@ interaction.
 ## Interaction model
 
 - Thumb tip + index fingertip pinch behaves like a fine ebru awl (`biz`): it
-  drags the existing paint film and is the only gesture that moves paint.
+  drags the existing paint film. Holding the left mouse button and dragging
+  uses the same force, radius, movement cap, smoothing and dye-free behavior.
 - Thumb tip + middle fingertip pinch adds exactly one paint drop per pinch. It
   does not inject velocity into the fluid. The two gestures are mutually
-  exclusive; if both are detected together, neither action runs.
+  exclusive; if both are detected together, neither action runs. Right-clicking
+  calls the same drop function, using the palette color without adding velocity.
+- Mouse movement is sampled once per simulation frame. Release, leaving the
+  canvas, losing focus or hiding the page stops dragging. The context menu is
+  suppressed only on the canvas; mouse painting does not require the camera.
 - A drag does not inject a new dye blob on every camera frame.
 - Hand impulse is 32% of the original mouse/touch impulse: controlled, but
   strong enough to visibly deform the paint at normal camera frame rates.
