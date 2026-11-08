@@ -1704,7 +1704,7 @@ function hashCode (s) {
             border: 2px solid rgba(52, 44, 37, 0.28);
             cursor: pointer;
         }
-        .ebru-color-swatch.selected {
+        .ebru-color-swatch.selected, .ebru-custom-color.selected {
             border-color: #2f2822;
             outline: 2px solid #f5efe3;
             outline-offset: -4px;
@@ -1775,15 +1775,20 @@ function hashCode (s) {
     function selectPaintColor(hex, selectedSwatch) {
         selectedPaintHex = hex;
         selectedPaintColor = paintColorFromHex(hex);
-        customColorInput.value = hex;
         toolCursor.style.setProperty('--paint-color', hex);
         colorSwatches.forEach(swatch => swatch.classList.toggle('selected', swatch === selectedSwatch));
+        customColorInput.classList.toggle('selected', selectedSwatch === null);
     }
 
     colorSwatches.forEach(swatch => {
         swatch.addEventListener('click', () => selectPaintColor(swatch.dataset.color, swatch));
     });
-    customColorInput.addEventListener('input', () => selectPaintColor(customColorInput.value, null));
+    // Keep the custom swatch independent of presets and apply both live and
+    // committed picker changes. Clicking it also reselects its existing color.
+    const selectCustomColor = () => selectPaintColor(customColorInput.value, null);
+    customColorInput.addEventListener('input', selectCustomColor);
+    customColorInput.addEventListener('change', selectCustomColor);
+    customColorInput.addEventListener('click', selectCustomColor);
     toolCursor.style.setProperty('--paint-color', selectedPaintHex);
 
     // Both inputs use the same force, radius, movement cap and dye behavior.
