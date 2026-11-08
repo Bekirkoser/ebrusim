@@ -29,10 +29,6 @@ interaction.
   motion disables the transition, and tracking loss hides and resets the hand.
 - Dye-density dissipation is disabled (`DENSITY_DISSIPATION = 0.0`), so colors
   are not deliberately faded as simulation time passes.
-- Idle frames do not run the fluid/advection step. The dye texture stays
-  unchanged until a mouse or hand drag moves paint, a drop adds pigment, or
-  Clear Paint clears it. Residual flow is cleared when movement stops so it
-  cannot dilute settled paint or restart during the next gesture.
 - Dye dissipation is also hard-locked to `0.0` in the advection pass and its UI
   control is removed. A bounded low-density coverage curve keeps numerically
   dispersed pigment visible without allowing neon brightness.
