@@ -247,7 +247,8 @@
                 }
             }
         </style>
-        <link rel="stylesheet" href="ui-theme.css">
+        <!-- Bump each asset version when its contents change to avoid stale browser caches. -->
+        <link rel="stylesheet" href="ui-theme.css?v=4cb3de7">
     </head>
     <body>
         <canvas></canvas>
@@ -326,9 +327,9 @@
                 });
             })();
         </script>
-        <script src="./i18n.js"></script>
+        <script src="./i18n.js?v=d6b7927"></script>
         <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.js" crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js" crossorigin="anonymous"></script>
-        <script src="./script.js"></script>
+        <script src="./script.js?v=d6b7927"></script>
     </body>
 </html>

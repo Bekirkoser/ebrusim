@@ -94,6 +94,23 @@ try {
         EbruI18n.setLanguage(language);
         check(swatches.every(swatch => swatch.title && swatch.title !== swatch.dataset.i18nTitle), 'Swatch names are translated');
     }
+    // Exercise the actual preset and opaque display, not only the custom picker.
+    clearPaint();
+    document.querySelector('[data-i18n-aria="sootBlack"]').click();
+    canvas.dispatchEvent(new MouseEvent('mousedown', { button: 2, buttons: 2,
+        clientX: canvas.clientWidth / 2, clientY: canvas.clientHeight / 2 }));
+    config.TRANSPARENT = false;
+    config.SHADING = true;
+    updateKeywords();
+    step(1 / 60);
+    render(pixelTarget);
+    const blackPixel = new Float32Array(4);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, pixelTarget.fbo);
+    gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.FLOAT, blackPixel);
+    check(blackPixel.slice(0, 3).every(value => value < .35), 'Black preset must visibly darken the opaque canvas');
+    config.TRANSPARENT = true;
+    config.SHADING = false;
+    updateKeywords();
     for (const hex of [...EBRU_PALETTE.map(p => p.hex), '#000000', '#ffffff', '#153253']) {
         clearPaint();
         const input = document.querySelector('.ebru-custom-color');
@@ -137,7 +154,8 @@ const server = http.createServer((req, res) => {
         let data = fs.readFileSync(file);
         if (file.endsWith('index.html')) {
             let html = data.toString().replace(/<script src="https:\/\/cdn.jsdelivr.net[^>]*><\/script>/g, '');
-            html = html.replace('src="./script.js"', 'src="./script.js?filter=' + url.searchParams.get('filter') + '"');
+            html = html.replace(/src="\.\/script\.js(?:\?[^"]*)?"/,
+                'src="./script.js?filter=' + url.searchParams.get('filter') + '"');
             data = Buffer.from(html);
         }
         if (file.endsWith('script.js')) {
