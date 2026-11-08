@@ -554,11 +554,9 @@ const displayShaderSource = `
         // Convert that light-like energy into bounded, paper-like pigment.
         float density = max(c.r, max(c.g, c.b));
         vec3 hue = density > 0.0001 ? clamp(c / density, 0.0, 1.0) : vec3(0.0);
-        // Preserve the visibility of thin pigment after numerical advection
-        // spreads it over a wider area. This curve is bounded, so it cannot
-        // recreate the previous neon over-brightness.
-        float baseCoverage = 1.0 - exp(-density * 1.8);
-        float a = pow(clamp(baseCoverage, 0.0, 1.0), 0.55);
+        // Coverage follows concentration: stretching paint makes a thinner
+        // film, rather than boosting faint traces into extra visible paint.
+        float a = 1.0 - exp(-density * 1.8);
         vec3 pigment = hue * 0.72;
         c = pigment * a;
         gl_FragColor = vec4(c, a);
@@ -737,6 +735,44 @@ const advectionShader = compileShader(gl.FRAGMENT_SHADER, `
     ext.supportLinearFiltering ? null : ['MANUAL_FILTERING']
 );
 
+// Reduce pigment on the GPU. Zero padding gives every source texel the
+// same weight, including odd-sized textures and one-pixel-wide levels.
+const dyeMassShader = compileShader(gl.FRAGMENT_SHADER, `
+    precision highp float;
+    precision highp sampler2D;
+    uniform sampler2D uTexture;
+    uniform vec2 sourceSize;
+
+    vec3 samplePigment(vec2 pixel) {
+        if (pixel.x >= sourceSize.x || pixel.y >= sourceSize.y)
+            return vec3(0.0);
+        return texture2D(uTexture, (pixel + 0.5) / sourceSize).rgb;
+    }
+
+    void main () {
+        vec2 p = floor(gl_FragCoord.xy) * 2.0;
+        vec3 mass = samplePigment(p) + samplePigment(p + vec2(1.0, 0.0))
+            + samplePigment(p + vec2(0.0, 1.0)) + samplePigment(p + vec2(1.0));
+        gl_FragColor = vec4(mass * 0.25, 1.0);
+    }
+`);
+
+const conserveDyeShader = compileShader(gl.FRAGMENT_SHADER, `
+    precision highp float;
+    precision highp sampler2D;
+    varying vec2 vUv;
+    uniform sampler2D uTexture;
+    uniform sampler2D uTargetMass;
+    uniform sampler2D uCurrentMass;
+
+    void main () {
+        vec3 target = texture2D(uTargetMass, vec2(0.5)).rgb;
+        vec3 current = texture2D(uCurrentMass, vec2(0.5)).rgb;
+        vec3 scale = target / max(current, vec3(1.0e-10));
+        gl_FragColor = vec4(texture2D(uTexture, vUv).rgb * scale, 1.0);
+    }
+`);
+
 const divergenceShader = compileShader(gl.FRAGMENT_SHADER, `
     precision mediump float;
     precision mediump sampler2D;
@@ -902,6 +938,9 @@ function CHECK_FRAMEBUFFER_STATUS () {
 }
 
 let dye;
+let dyeMassLevels = [];
+let dyeTargetMass;
+let dyeMassDirty = true;
 let velocity;
 let divergence;
 let curl;
@@ -925,6 +964,8 @@ const sunraysMaskProgram     = new Program(baseVertexShader, sunraysMaskShader);
 const sunraysProgram         = new Program(baseVertexShader, sunraysShader);
 const splatProgram           = new Program(baseVertexShader, splatShader);
 const advectionProgram       = new Program(baseVertexShader, advectionShader);
+const dyeMassProgram         = new Program(baseVertexShader, dyeMassShader);
+const conserveDyeProgram     = new Program(baseVertexShader, conserveDyeShader);
 const divergenceProgram      = new Program(baseVertexShader, divergenceShader);
 const curlProgram            = new Program(baseVertexShader, curlShader);
 const vorticityProgram       = new Program(baseVertexShader, vorticityShader);
@@ -950,6 +991,9 @@ function initFramebuffers () {
     else
         dye = resizeDoubleFBO(dye, dyeRes.width, dyeRes.height, rgba.internalFormat, rgba.format, texType, filtering);
 
+    dyeMassDirty = true;
+    initDyeMassFramebuffers();
+
     if (velocity == null)
         velocity = createDoubleFBO(simRes.width, simRes.height, rg.internalFormat, rg.format, texType, filtering);
     else
@@ -961,6 +1005,59 @@ function initFramebuffers () {
 
     initBloomFramebuffers();
     initSunraysFramebuffers();
+}
+
+function initDyeMassFramebuffers () {
+    const first = dyeMassLevels[0];
+    if (first && first.width === Math.ceil(dye.width / 2)
+        && first.height === Math.ceil(dye.height / 2)) return;
+
+    for (const level of dyeMassLevels) {
+        gl.deleteTexture(level.texture);
+        gl.deleteFramebuffer(level.fbo);
+    }
+    dyeMassLevels = [];
+    const rgba = ext.formatRGBA;
+    let width = dye.width, height = dye.height;
+    do {
+        width = Math.max(1, Math.ceil(width / 2));
+        height = Math.max(1, Math.ceil(height / 2));
+        dyeMassLevels.push(createFBO(width, height, rgba.internalFormat,
+            rgba.format, ext.halfFloatTexType, gl.NEAREST));
+    } while (width > 1 || height > 1);
+    if (!dyeTargetMass)
+        dyeTargetMass = createFBO(1, 1, rgba.internalFormat, rgba.format, ext.halfFloatTexType, gl.NEAREST);
+    dyeMassDirty = true;
+}
+
+function measureDyeMass () {
+    dyeMassProgram.bind();
+    let source = dye.read;
+    for (const level of dyeMassLevels) {
+        gl.uniform1i(dyeMassProgram.uniforms.uTexture, source.attach(0));
+        gl.uniform2f(dyeMassProgram.uniforms.sourceSize, source.width, source.height);
+        blit(level);
+        source = level;
+    }
+    return source;
+}
+
+function rememberDyeMass () {
+    const mass = measureDyeMass();
+    copyProgram.bind();
+    gl.uniform1i(copyProgram.uniforms.uTexture, mass.attach(0));
+    blit(dyeTargetMass);
+    dyeMassDirty = false;
+}
+
+function conserveDyeMass () {
+    const mass = measureDyeMass();
+    conserveDyeProgram.bind();
+    gl.uniform1i(conserveDyeProgram.uniforms.uTexture, dye.read.attach(0));
+    gl.uniform1i(conserveDyeProgram.uniforms.uTargetMass, dyeTargetMass.attach(1));
+    gl.uniform1i(conserveDyeProgram.uniforms.uCurrentMass, mass.attach(2));
+    blit(dye.write);
+    dye.swap();
 }
 
 function initBloomFramebuffers () {
@@ -1179,6 +1276,7 @@ function applyInputs () {
 }
 
 function clearPaint () {
+    dyeMassDirty = true;
     // Clear residual flow and pressure together with the paint so new drops
     // added to a clean tray are not affected by old motion.
     const targets = [
@@ -1206,6 +1304,9 @@ function clearPaint () {
 
 function step (dt) {
     gl.disable(gl.BLEND);
+    // Only a new drop, a clear, or a resolution change resets the budget.
+    // Reuse it between frames to avoid accumulating half-float rounding drift.
+    if (dyeMassDirty) rememberDyeMass();
 
     curlProgram.bind();
     gl.uniform2f(curlProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
@@ -1268,6 +1369,9 @@ function step (dt) {
     gl.uniform1f(advectionProgram.uniforms.dissipation, 0.0);
     blit(dye.write);
     dye.swap();
+    // Semi-Lagrangian sampling can grow/shrink pigment under deformation.
+    // Correct its total per color channel without modifying fluid velocity.
+    conserveDyeMass();
 }
 
 function render (target) {
@@ -1432,6 +1536,7 @@ function splat (x, y, dx, dy, color, options = {}) {
     // A traditional ebru awl/combs move the existing floating paint film;
     // they do not deposit a fresh blob of pigment on every movement.
     if (options.addDye === false) return;
+    dyeMassDirty = true;
 
     splatProgram.bind();
     gl.uniform1i(splatProgram.uniforms.uTarget, dye.read.attach(0));

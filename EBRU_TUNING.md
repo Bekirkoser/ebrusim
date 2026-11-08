@@ -1,7 +1,7 @@
 # Ebru hand-control tuning
 
-This copy keeps the original project untouched and changes only the hand/pinch
-interaction.
+This version keeps continuous fluid motion while adding ebru hand/mouse
+controls and conserving the amount of pigment during spreading.
 
 ## Interaction model
 
@@ -30,8 +30,12 @@ interaction.
 - Dye-density dissipation is disabled (`DENSITY_DISSIPATION = 0.0`), so colors
   are not deliberately faded as simulation time passes.
 - Dye dissipation is also hard-locked to `0.0` in the advection pass and its UI
-  control is removed. A bounded low-density coverage curve keeps numerically
-  dispersed pigment visible without allowing neon brightness.
+  control is removed. A GPU reduction measures pigment per RGB channel; after
+  advection, concentrations are corrected to the saved amount. Only depositing
+  paint, clearing, or resizing the simulation resets that amount. This prevents
+  sampling from multiplying paint while leaving the velocity solver unchanged.
+- Coverage follows pigment concentration without boosting faint traces. A
+  stretched drop forms a thinner film; it does not acquire more pigment.
 - The simulation starts on a neutral light-gray background
   (`BACK_COLOR = 206, 206, 206`).
   Generated pigment intensity is raised from `0.15` to `0.35` so colors remain
@@ -77,3 +81,11 @@ The hand preset is near the start of `initHandTracking()` in `script.js`:
 
 If the tool feels strong, lower `forceScale` to `0.24`. If it feels too weak,
 try `0.40` before changing the global fluid settings.
+
+## Conservation regression check
+
+Run `node tests/paint-volume.cjs` with Chrome installed. Set `CHROME_PATH` if
+Chrome is outside the default Windows location. The test uses real WebGL and
+checks pigment totals, continued motion, adding a second color, edge dragging,
+quality changes, clearing, and idle pure-color paint. It exercises native and
+manual texture filtering and allows 0.5% error for half-float GPU storage.
