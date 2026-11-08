@@ -8,6 +8,37 @@
     --ebru-ui-font: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     color-scheme: light;
 }
+.ebru-language {
+    position: fixed;
+    top: 26px;
+    left: 80px;
+    z-index: 3100;
+    display: flex;
+    gap: 3px;
+    padding: 3px;
+    border: 1px solid var(--ebru-line);
+    border-radius: 10px;
+    background: var(--ebru-paper);
+    box-shadow: 0 3px 12px rgba(40, 48, 40, .12);
+}
+.ebru-language button {
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--ebru-ink);
+    font: 600 12px var(--ebru-ui-font);
+    cursor: pointer;
+}
+.ebru-language button[aria-pressed="true"] { background: var(--ebru-indigo); color: white; }
+.ebru-camera-status { max-width: calc(100vw - 40px); box-sizing: border-box; line-height: 1.5; }
+html[lang="tr"] .dg .property-name { width: 49%; font-size: 10px; }
+html[lang="tr"] .dg .c { width: 51%; }
+@media (max-width: 600px) {
+    .dg.ac { top: 80px; }
+    .ebru-info-overlay { padding-top: 80px; }
+    .ebru-info-card { max-height: calc(100dvh - 104px); }
+}
 .dg {
     opacity: .97;
     color: var(--ebru-ink);

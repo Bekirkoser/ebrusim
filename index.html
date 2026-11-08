@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
         <meta charset="utf-8">
         <meta http-equiv="Cache-Control" content="no-cache">
@@ -108,7 +108,7 @@
             }
 
             .ebru-info-card::before {
-                content: "HOW TO";
+                content: attr(data-badge);
                 position: absolute;
                 top: 17px;
                 left: -13px;
@@ -252,30 +252,34 @@
     <body>
         <canvas></canvas>
 
-        <button class="ebru-info-button" type="button" aria-label="Open instructions" aria-controls="ebru-info" aria-expanded="true">i</button>
+        <button class="ebru-info-button" type="button" data-i18n-aria="openHelp" aria-label="Open instructions" aria-controls="ebru-info" aria-expanded="true">i</button>
 
         <div class="ebru-info-overlay is-open" id="ebru-info" role="dialog" aria-modal="true" aria-labelledby="ebru-info-title">
-            <section class="ebru-info-card">
-                <button class="ebru-info-close" type="button" aria-label="Close instructions">&times;</button>
-                <h1 class="ebru-info-title" id="ebru-info-title">Make Ebru<span class="ebru-info-bang">!</span></h1>
-                <p class="ebru-info-lead">Use your mouse or turn on Camera</p>
+            <nav class="ebru-language" data-i18n-aria="language" aria-label="Language">
+                <button type="button" data-language="en" lang="en" aria-label="English" aria-pressed="true">EN</button>
+                <button type="button" data-language="tr" lang="tr" aria-label="Türkçe" aria-pressed="false">TR</button>
+            </nav>
+            <section class="ebru-info-card" data-i18n-badge="howTo" data-badge="HOW TO">
+                <button class="ebru-info-close" type="button" data-i18n-aria="closeHelp" aria-label="Close instructions">&times;</button>
+                <h1 class="ebru-info-title" id="ebru-info-title"><span data-i18n="makeEbru">Make Ebru</span><span class="ebru-info-bang">!</span></h1>
+                <p class="ebru-info-lead" data-i18n="helpLead">Use your mouse or turn on Camera</p>
 
                 <div class="ebru-info-steps">
                     <article class="ebru-info-step">
-                        <strong>Move the Paint</strong>
-                        <p>Hold the left mouse button and drag. With Camera, pinch thumb + index finger and move.</p>
+                        <strong data-i18n="moveTitle">Move the Paint</strong>
+                        <p data-i18n="moveHelp">Hold the left mouse button and drag. With Camera, pinch thumb + index finger and move.</p>
                     </article>
                     <article class="ebru-info-step">
-                        <strong>Drop Paint</strong>
-                        <p>Right-click once to add a drop in your selected color. With Camera, pinch thumb + middle finger.</p>
+                        <strong data-i18n="dropTitle">Drop Paint</strong>
+                        <p data-i18n="dropHelp">Right-click once to add a drop in your selected color. With Camera, pinch thumb + middle finger.</p>
                     </article>
                     <article class="ebru-info-step">
-                        <strong>Pick a Color</strong>
-                        <p>Choose a swatch or make a custom color in the Paint Color palette.</p>
+                        <strong data-i18n="colorTitle">Pick a Color</strong>
+                        <p data-i18n="colorHelp">Choose a swatch or make a custom color in the Paint Color palette.</p>
                     </article>
                     <article class="ebru-info-step">
-                        <strong>Customize</strong>
-                        <p>Use the panel on the right to tune the flow, background, and capture.</p>
+                        <strong data-i18n="customizeTitle">Customize</strong>
+                        <p data-i18n="customizeHelp">Use the panel on the right to tune the flow, background, and capture.</p>
                     </article>
                 </div>
             </section>
@@ -286,8 +290,13 @@
                 const infoOverlay = document.getElementById('ebru-info');
                 const infoButton = document.querySelector('.ebru-info-button');
                 const infoClose = document.querySelector('.ebru-info-close');
+                const languageMenu = document.querySelector('.ebru-language');
 
                 function setInfoOpen(isOpen) {
+                    // Keep language selection accessible inside the open dialog
+                    // and outside its hidden subtree when the guide is closed.
+                    if (isOpen) infoOverlay.prepend(languageMenu);
+                    else document.body.insertBefore(languageMenu, infoOverlay);
                     infoOverlay.classList.toggle('is-open', isOpen);
                     infoOverlay.setAttribute('aria-hidden', String(!isOpen));
                     infoButton.setAttribute('aria-expanded', String(isOpen));
@@ -317,6 +326,7 @@
                 });
             })();
         </script>
+        <script src="./i18n.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.js" crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js" crossorigin="anonymous"></script>
         <script src="./script.js"></script>

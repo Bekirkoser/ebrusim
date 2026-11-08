@@ -53,8 +53,9 @@ controls and conserving the amount of pigment during spreading.
 - The camera button is a toggle. Clicking it while tracking is active stops the
   MediaPipe frame loop, camera stream, and all media tracks; clicking again
   starts a fresh camera session.
-- All user-facing camera, tracking, gesture, error, palette, and control labels
-  are in English.
+- The top-left EN / TR selector translates the guide, controls, palette,
+  camera states, and errors without resetting the drawing or camera. It saves
+  the language preference locally; English is the default on a first visit.
 
 ## Why
 

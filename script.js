@@ -203,22 +203,44 @@ function supportRenderTextureFormat (gl, internalFormat, format, type) {
 
 function startGUI () {
     var gui = new dat.GUI({ width: 300 });
-    gui.add(config, 'DYE_RESOLUTION', { 'high': 1024, 'medium': 512, 'low': 256, 'very low': 128 }).name('quality').onFinishChange(initFramebuffers);
-    gui.add(config, 'SIM_RESOLUTION', { '32': 32, '64': 64, '128': 128, '256': 256 }).name('sim resolution').onFinishChange(initFramebuffers);
-    gui.add(config, 'VELOCITY_DISSIPATION', 0, 4.0).name('velocity diffusion');
-    gui.add(config, 'PRESSURE', 0.0, 1.0).name('pressure');
-    gui.add(config, 'CURL', 0, 50).name('vorticity').step(1);
-    gui.add(config, 'SPLAT_RADIUS', 0.01, 1.0).name('splat radius');
-    gui.add(config, 'SHADING').name('shading').onFinishChange(updateKeywords);
-    gui.add(config, 'COLORFUL').name('colorful');
-    gui.add(config, 'PAUSED').name('paused').listen();
-
-    gui.add({ fun: clearPaint }, 'fun').name('Clear Paint');
+    const translatedControls = [];
+    function labelControl(controller, key) {
+        translatedControls.push({ controller, key });
+        return controller;
+    }
+    const quality = labelControl(gui.add(config, 'DYE_RESOLUTION', { 'high': 1024, 'medium': 512, 'low': 256, 'very low': 128 }), 'quality').onFinishChange(initFramebuffers);
+    labelControl(gui.add(config, 'SIM_RESOLUTION', { '32': 32, '64': 64, '128': 128, '256': 256 }), 'resolution').onFinishChange(initFramebuffers);
+    labelControl(gui.add(config, 'VELOCITY_DISSIPATION', 0, 4.0), 'diffusion');
+    labelControl(gui.add(config, 'PRESSURE', 0.0, 1.0), 'pressure');
+    labelControl(gui.add(config, 'CURL', 0, 50), 'vorticity').step(1);
+    labelControl(gui.add(config, 'SPLAT_RADIUS', 0.01, 1.0), 'radius');
+    labelControl(gui.add(config, 'SHADING'), 'shading').onFinishChange(updateKeywords);
+    labelControl(gui.add(config, 'COLORFUL'), 'colorful');
+    labelControl(gui.add(config, 'PAUSED'), 'paused').listen();
+    labelControl(gui.add({ fun: clearPaint }, 'fun'), 'clear');
 
     let captureFolder = gui.addFolder('Capture');
-    captureFolder.addColor(config, 'BACK_COLOR').name('background color');
-    captureFolder.add(config, 'TRANSPARENT').name('transparent');
-    captureFolder.add({ fun: captureScreenshot }, 'fun').name('take screenshot');
+    labelControl(captureFolder.addColor(config, 'BACK_COLOR'), 'background');
+    labelControl(captureFolder.add(config, 'TRANSPARENT'), 'transparent');
+    labelControl(captureFolder.add({ fun: captureScreenshot }, 'fun'), 'screenshot');
+
+    function translateControls() {
+        const t = EbruI18n.t;
+        translatedControls.forEach(({ controller, key }) => {
+            controller.name(t(key));
+            controller.domElement.querySelectorAll('input, select').forEach(input => input.setAttribute('aria-label', t(key)));
+        });
+        const qualityKeys = { 1024: 'high', 512: 'medium', 256: 'low', 128: 'veryLow' };
+        quality.domElement.querySelectorAll('option').forEach(option => {
+            option.textContent = t(qualityKeys[option.value]);
+        });
+        captureFolder.name = t('capture');
+        dat.GUI.TEXT_OPEN = t('openControls');
+        dat.GUI.TEXT_CLOSED = t('closeControls');
+        gui.__closeButton.textContent = t(gui.closed ? 'openControls' : 'closeControls');
+    }
+    window.addEventListener('ebru-language-change', translateControls);
+    translateControls();
 
     if (isMobile())
         gui.close();
@@ -1703,7 +1725,8 @@ function hashCode (s) {
 
     // UI: kamera butonu
     const btn = document.createElement('button');
-    btn.textContent = '👁 Camera';
+    btn.className = 'ebru-camera-button';
+    EbruI18n.bind(btn, 'camera');
     btn.style.cssText = [
         'position:fixed', 'bottom:20px', 'right:20px',
         'padding:10px 20px', 'background:rgba(0,0,0,0.6)',
@@ -1716,6 +1739,8 @@ function hashCode (s) {
 
     // UI: durum etiketi
     const label = document.createElement('div');
+    label.className = 'ebru-camera-status';
+    label.setAttribute('role', 'status');
     label.style.cssText = [
         'position:fixed', 'bottom:62px', 'right:20px',
         'padding:5px 14px', 'background:rgba(0,0,0,0.55)',
@@ -1844,17 +1869,18 @@ function hashCode (s) {
     const palette = document.createElement('div');
     palette.className = 'ebru-color-palette';
     palette.innerHTML = `
-        <div class="ebru-palette-title">PAINT COLOR</div>
+        <div class="ebru-palette-title" data-i18n="palette">PAINT COLOR</div>
         <div class="ebru-palette-row">
-            <button class="ebru-color-swatch selected" type="button" data-color="#9b3f34" aria-label="Madder red" style="background:#9b3f34"></button>
-            <button class="ebru-color-swatch" type="button" data-color="#c17a2f" aria-label="Ochre" style="background:#c17a2f"></button>
-            <button class="ebru-color-swatch" type="button" data-color="#28507f" aria-label="Indigo blue" style="background:#28507f"></button>
-            <button class="ebru-color-swatch" type="button" data-color="#3f6b50" aria-label="Earth green" style="background:#3f6b50"></button>
-            <button class="ebru-color-swatch" type="button" data-color="#5b456f" aria-label="Violet" style="background:#5b456f"></button>
-            <input class="ebru-custom-color" type="color" value="#9b3f34" aria-label="Custom paint color">
+            <button class="ebru-color-swatch selected" type="button" data-color="#9b3f34" data-i18n-aria="madder" data-i18n-title="madder" aria-label="Madder red" style="background:#9b3f34"></button>
+            <button class="ebru-color-swatch" type="button" data-color="#c17a2f" data-i18n-aria="ochre" data-i18n-title="ochre" aria-label="Ochre" style="background:#c17a2f"></button>
+            <button class="ebru-color-swatch" type="button" data-color="#28507f" data-i18n-aria="indigo" data-i18n-title="indigo" aria-label="Indigo blue" style="background:#28507f"></button>
+            <button class="ebru-color-swatch" type="button" data-color="#3f6b50" data-i18n-aria="green" data-i18n-title="green" aria-label="Earth green" style="background:#3f6b50"></button>
+            <button class="ebru-color-swatch" type="button" data-color="#5b456f" data-i18n-aria="violet" data-i18n-title="violet" aria-label="Violet" style="background:#5b456f"></button>
+            <input class="ebru-custom-color" type="color" value="#9b3f34" data-i18n-aria="customColor" data-i18n-title="customColor" aria-label="Custom paint color">
         </div>
     `;
     document.body.appendChild(palette);
+    EbruI18n.apply(palette);
 
     let selectedPaintHex = '#9b3f34';
     let selectedPaintColor = paintColorFromHex(selectedPaintHex);
@@ -2003,9 +2029,9 @@ function hashCode (s) {
     const PINCH_START_DISTANCE = 0.055;
     const PINCH_RELEASE_DISTANCE = 0.075;
 
-    function setLabel(text, active) {
+    function setLabel(key, active) {
         label.style.display = 'block';
-        label.textContent = text;
+        if (label.dataset.i18n !== key) EbruI18n.bind(label, key);
         label.style.color = active ? '#e0b083' : 'rgba(255,255,255,0.55)';
     }
 
@@ -2091,13 +2117,13 @@ function hashCode (s) {
             }
 
             if (moveGesture) {
-                setLabel('MOVE PAINT', true);
+                setLabel('movePaint', true);
             } else if (dropGesture) {
-                setLabel('PAINT DROP', true);
+                setLabel('paintDrop', true);
             } else if (indexCandidate && middleCandidate) {
-                setLabel('SEPARATE FINGERS', false);
+                setLabel('separateFingers', false);
             } else {
-                setLabel('HAND TRACKING', false);
+                setLabel('tracking', false);
             }
 
             prevX = sx;
@@ -2110,7 +2136,7 @@ function hashCode (s) {
             prevY = -1;
             toolCursor.style.display = 'none';
             toolCursor.classList.remove('active', 'drop-mode', 'pinching');
-            setLabel('SHOW YOUR HAND', false);
+            setLabel('showHand', false);
         }
     }
 
@@ -2152,20 +2178,20 @@ function hashCode (s) {
         }
 
         resetHandInteraction();
-        btn.textContent = '👁 Camera';
+        EbruI18n.bind(btn, 'camera');
         btn.style.opacity = '1';
         btn.style.borderColor = 'rgba(255,255,255,0.3)';
         btn.style.color = '#fff';
-        if (showStatus) setLabel('CAMERA OFF', false);
+        if (showStatus) setLabel('cameraOff', false);
     }
 
     async function startCamera() {
         if (camStarted) return;
         const session = ++cameraSession;
         camStarted = true;
-        btn.textContent = '⏳ Loading…';
+        EbruI18n.bind(btn, 'loading');
         btn.style.opacity = '0.6';
-        setLabel('LOADING MEDIAPIPE…', false);
+        setLabel('loadingTracking', false);
 
         try {
             // MediaPipe Hands
@@ -2208,15 +2234,19 @@ function hashCode (s) {
             cameraInstance = camera;
             camera.start();
 
-            btn.textContent = '👁 Camera On · Turn Off';
+            EbruI18n.bind(btn, 'cameraOn');
             btn.style.opacity = '1';
             btn.style.borderColor = 'rgba(165,248,211,0.6)';
             btn.style.color = '#e0b083';
-            setLabel('SHOW YOUR HAND', false);
+            setLabel('showHand', false);
 
         } catch (err) {
             await stopCamera(false);
-            setLabel('ERROR: ' + err.message, false);
+            const errorKeys = {
+                NotAllowedError: 'cameraPermission', SecurityError: 'cameraPermission',
+                NotFoundError: 'cameraMissing', NotReadableError: 'cameraBusy'
+            };
+            setLabel(errorKeys[err.name] || 'cameraError', false);
             console.error('Hand tracking error:', err);
         }
     }
