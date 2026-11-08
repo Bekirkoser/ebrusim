@@ -70,8 +70,7 @@ function pointerPrototype () {
     this.down = false;
     this.moved = false;
     this.color = [30, 0, 300];
-    // Input-specific interaction settings. Mouse/touch keep the original
-    // fluid behavior; hand tracking overrides these to behave like an ebru awl.
+    // Hand tracking configures these settings for a fine ebru awl.
     this.forceScale = 1.0;
     this.radiusScale = 1.0;
     this.maxDelta = Infinity;
@@ -79,8 +78,6 @@ function pointerPrototype () {
 }
 
 let pointers = [];
-let splatStack = [];
-pointers.push(new pointerPrototype());
 
 const { gl, ext } = getWebGLContext(canvas);
 
@@ -195,10 +192,6 @@ function startGUI () {
     gui.add(config, 'SHADING').name('shading').onFinishChange(updateKeywords);
     gui.add(config, 'COLORFUL').name('colorful');
     gui.add(config, 'PAUSED').name('paused').listen();
-
-    gui.add({ fun: () => {
-        splatStack.push(parseInt(Math.random() * 20) + 5);
-    } }, 'fun').name('Random splats');
 
     gui.add({ fun: clearPaint }, 'fun').name('Clear Paint');
 
@@ -1156,9 +1149,6 @@ function updateColors (dt) {
 }
 
 function applyInputs () {
-    if (splatStack.length > 0)
-        multipleSplats(splatStack.pop());
-
     pointers.forEach(p => {
         if (p.moved) {
             p.moved = false;
@@ -1186,7 +1176,6 @@ function clearPaint () {
     });
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-    splatStack.length = 0;
     pointers.forEach(pointer => {
         pointer.moved = false;
         pointer.deltaX = 0;
@@ -1441,66 +1430,10 @@ function correctRadius (radius) {
     return radius;
 }
 
-canvas.addEventListener('mousedown', e => {
-    let posX = scaleByPixelRatio(e.offsetX);
-    let posY = scaleByPixelRatio(e.offsetY);
-    let pointer = pointers.find(p => p.id == -1);
-    if (pointer == null)
-        pointer = new pointerPrototype();
-    updatePointerDownData(pointer, -1, posX, posY);
-});
-
-canvas.addEventListener('mousemove', e => {
-    let pointer = pointers[0];
-    if (!pointer.down) return;
-    let posX = scaleByPixelRatio(e.offsetX);
-    let posY = scaleByPixelRatio(e.offsetY);
-    updatePointerMoveData(pointer, posX, posY);
-});
-
-window.addEventListener('mouseup', () => {
-    updatePointerUpData(pointers[0]);
-});
-
-canvas.addEventListener('touchstart', e => {
-    e.preventDefault();
-    const touches = e.targetTouches;
-    while (touches.length >= pointers.length)
-        pointers.push(new pointerPrototype());
-    for (let i = 0; i < touches.length; i++) {
-        let posX = scaleByPixelRatio(touches[i].pageX);
-        let posY = scaleByPixelRatio(touches[i].pageY);
-        updatePointerDownData(pointers[i + 1], touches[i].identifier, posX, posY);
-    }
-});
-
-canvas.addEventListener('touchmove', e => {
-    e.preventDefault();
-    const touches = e.targetTouches;
-    for (let i = 0; i < touches.length; i++) {
-        let pointer = pointers[i + 1];
-        if (!pointer.down) continue;
-        let posX = scaleByPixelRatio(touches[i].pageX);
-        let posY = scaleByPixelRatio(touches[i].pageY);
-        updatePointerMoveData(pointer, posX, posY);
-    }
-}, false);
-
-window.addEventListener('touchend', e => {
-    const touches = e.changedTouches;
-    for (let i = 0; i < touches.length; i++)
-    {
-        let pointer = pointers.find(p => p.id == touches[i].identifier);
-        if (pointer == null) continue;
-        updatePointerUpData(pointer);
-    }
-});
-
+// Paint interaction is driven exclusively by camera hand tracking.
 window.addEventListener('keydown', e => {
     if (e.code === 'KeyP')
         config.PAUSED = !config.PAUSED;
-    if (e.key === ' ')
-        splatStack.push(parseInt(Math.random() * 20) + 5);
 });
 
 function updatePointerDownData (pointer, id, posX, posY) {
@@ -1830,7 +1763,7 @@ function hashCode (s) {
     customColorInput.addEventListener('input', () => selectPaintColor(customColorInput.value, null));
     toolCursor.style.setProperty('--paint-color', selectedPaintHex);
 
-    // Use a dedicated pointer slot for hand tracking (index 99).
+    // Register the hand as the only interactive paint pointer.
     const HAND_POINTER_ID = 99;
     let handPointer = new pointerPrototype();
     handPointer.id = HAND_POINTER_ID;
