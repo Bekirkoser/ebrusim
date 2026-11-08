@@ -1731,6 +1731,9 @@ function hashCode (s) {
             <img class="ebru-hand-pinch" src="assets/hand-pinch.png" alt="" draggable="false" width="1536" height="1024">
         </div>`;
     document.body.appendChild(toolCursor);
+    const mouseCursor = toolCursor.cloneNode(true);
+    mouseCursor.classList.add('ebru-mouse-cursor');
+    document.body.appendChild(mouseCursor);
 
     // Paint palette independent from the main dat.GUI panel.
     const palette = document.createElement('div');
@@ -1789,7 +1792,7 @@ function hashCode (s) {
     const mousePointer = createEbruPointer(-1);
     let mouseTarget = null;
     let mouseX = -1, mouseY = -1;
-    canvas.style.cursor = 'grab';
+    canvas.style.cursor = 'none';
 
     function mousePosition(event) {
         const rect = canvas.getBoundingClientRect();
@@ -1808,7 +1811,12 @@ function hashCode (s) {
         updatePointerUpData(mousePointer);
         mouseTarget = null;
         mouseX = mouseY = -1;
-        canvas.style.cursor = 'grab';
+        mouseCursor.classList.remove('active', 'drop-mode', 'pinching');
+    }
+
+    function hideMouseCursor() {
+        stopMouseDrag();
+        mouseCursor.style.display = 'none';
     }
 
     // Sample the latest mouse position once per simulation frame so high-rate
@@ -1820,8 +1828,13 @@ function hashCode (s) {
         mouseY = point.y;
         const position = mouseCanvasPosition(mouseX, mouseY);
         updatePointerMoveData(mousePointer, position.x, position.y);
+        const rect = canvas.getBoundingClientRect();
+        updateToolCursor(mouseX + rect.left, mouseY + rect.top, 'move', mouseCursor);
     };
 
+    canvas.addEventListener('mouseenter', event => {
+        updateToolCursor(event.clientX, event.clientY, 'tracking', mouseCursor);
+    });
     canvas.addEventListener('mousedown', event => {
         if (event.button !== 0 && event.button !== 2) return;
         event.preventDefault();
@@ -1834,31 +1847,36 @@ function hashCode (s) {
         if (event.button === 2) {
             stopMouseDrag();
             addPaintDrop(position.x, position.y);
+            updateToolCursor(event.clientX, event.clientY, 'drop', mouseCursor);
         } else {
             mouseTarget = point;
             mouseX = point.x;
             mouseY = point.y;
             updatePointerDownData(mousePointer, -1, position.x, position.y);
-            canvas.style.cursor = 'grabbing';
+            updateToolCursor(event.clientX, event.clientY, 'move', mouseCursor);
         }
     });
 
     canvas.addEventListener('mousemove', event => {
-        if (!mousePointer.down) return;
+        if (!mousePointer.down) {
+            updateToolCursor(event.clientX, event.clientY, 'tracking', mouseCursor);
+            return;
+        }
         if ((event.buttons & 3) !== 1) {
             stopMouseDrag();
+            updateToolCursor(event.clientX, event.clientY, 'tracking', mouseCursor);
             return;
         }
         mouseTarget = mousePosition(event);
     });
     canvas.addEventListener('contextmenu', event => event.preventDefault());
-    canvas.addEventListener('mouseleave', stopMouseDrag);
+    canvas.addEventListener('mouseleave', hideMouseCursor);
     window.addEventListener('mouseup', event => {
-        if (event.button === 0) stopMouseDrag();
+        if (event.button === 0 || event.button === 2) stopMouseDrag();
     });
-    window.addEventListener('blur', stopMouseDrag);
+    window.addEventListener('blur', hideMouseCursor);
     document.addEventListener('visibilitychange', () => {
-        if (document.hidden) stopMouseDrag();
+        if (document.hidden) hideMouseCursor();
     });
 
     // Smoothing and independent gesture states.
@@ -1881,13 +1899,13 @@ function hashCode (s) {
         label.style.color = active ? '#e0b083' : 'rgba(255,255,255,0.55)';
     }
 
-    function updateToolCursor(x, y, mode) {
-        toolCursor.style.display = 'block';
-        toolCursor.style.left = x + 'px';
-        toolCursor.style.top = y + 'px';
-        toolCursor.classList.toggle('active', mode !== 'tracking');
-        toolCursor.classList.toggle('drop-mode', mode === 'drop');
-        toolCursor.classList.toggle('pinching', mode === 'move');
+    function updateToolCursor(x, y, mode, cursor = toolCursor) {
+        cursor.style.display = 'block';
+        cursor.style.left = x + 'px';
+        cursor.style.top = y + 'px';
+        cursor.classList.toggle('active', mode !== 'tracking');
+        cursor.classList.toggle('drop-mode', mode === 'drop');
+        cursor.classList.toggle('pinching', mode === 'move');
     }
 
     function distance(p1, p2) {
