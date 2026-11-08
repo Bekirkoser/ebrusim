@@ -24,6 +24,33 @@ SOFTWARE.
 
 'use strict';
 
+// Digital sRGB interpretations of traditional ebru pigments (see EBRU_TUNING.md).
+const EBRU_PALETTE = [
+    { hex: '#c94b3c', name: 'oxideRed' },
+    { hex: '#e3ad35', name: 'oxideYellow' },
+    { hex: '#244d80', name: 'lahor' },
+    { hex: '#365fc4', name: 'ultramarine' },
+    { hex: '#3d965b', name: 'sapGreen' },
+    { hex: '#913968', name: 'lac' },
+    { hex: '#e44845', name: 'flowerRed' },
+    { hex: '#7eb7d8', name: 'lightIndigo' },
+    { hex: '#996535', name: 'camlica' },
+    { hex: '#242329', name: 'sootBlack' },
+    { hex: '#fffaf0', name: 'pigmentWhite' }
+];
+
+function paintColorFromHex(hex, amount = 0.95) {
+    const value = parseInt(hex.slice(1), 16);
+    // Premultiplied color + independent pigment amount preserve light/dark
+    // shades, including pure black, without changing the size of a paint drop.
+    return {
+        r: ((value >> 16) & 255) / 255 * amount,
+        g: ((value >> 8) & 255) / 255 * amount,
+        b: (value & 255) / 255 * amount,
+        a: amount
+    };
+}
+
 // Simulation section
 
 const canvas = document.getElementsByTagName('canvas')[0];
@@ -131,7 +158,7 @@ function getWebGLContext (canvas) {
         supportLinearFiltering = gl.getExtension('OES_texture_half_float_linear');
     }
 
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clearColor(0.0, 0.0, 0.0, 0.0);
 
     const halfFloatTexType = isWebGL2 ? gl.HALF_FLOAT : halfFloat.HALF_FLOAT_OES;
     let formatRGBA;
@@ -535,6 +562,7 @@ const displayShaderSource = `
 
     void main () {
         vec3 c = texture2D(uTexture, vUv).rgb;
+        float shading = 1.0;
 
     #ifdef SHADING
         vec3 lc = texture2D(uTexture, vL).rgb;
@@ -548,8 +576,7 @@ const displayShaderSource = `
         vec3 n = normalize(vec3(dx, dy, length(texelSize)));
         vec3 l = vec3(0.0, 0.0, 1.0);
 
-        float diffuse = clamp(dot(n, l) + 0.7, 0.7, 1.0);
-        c *= diffuse;
+        shading = clamp(dot(n, l) + 0.7, 0.7, 1.0);
     #endif
 
     #ifdef BLOOM
@@ -572,15 +599,14 @@ const displayShaderSource = `
         c += bloom;
     #endif
 
-        // Dye texture values are additive and can exceed 1 where colors meet.
-        // Convert that light-like energy into bounded, paper-like pigment.
-        float density = max(c.r, max(c.g, c.b));
-        vec3 hue = density > 0.0001 ? clamp(c / density, 0.0, 1.0) : vec3(0.0);
+        // Pigment amount is independent of color: black has mass too, and
+        // white should remain white rather than being capped at gray.
+        float density = texture2D(uTexture, vUv).a;
+        vec3 hue = clamp(c / max(density, 1.0e-10), 0.0, 1.0);
         // Coverage follows concentration: stretching paint makes a thinner
         // film, rather than boosting faint traces into extra visible paint.
-        float a = 1.0 - exp(-density * 1.8);
-        vec3 pigment = hue * 0.72;
-        c = pigment * a;
+        float a = 1.0 - exp(-density * 1.8 * shading);
+        c = hue * a;
         gl_FragColor = vec4(c, a);
     }
 `;
@@ -705,15 +731,15 @@ const splatShader = compileShader(gl.FRAGMENT_SHADER, `
     uniform sampler2D uTarget;
     uniform float aspectRatio;
     uniform vec3 color;
+    uniform float pigmentAmount;
     uniform vec2 point;
     uniform float radius;
 
     void main () {
         vec2 p = vUv - point.xy;
         p.x *= aspectRatio;
-        vec3 splat = exp(-dot(p, p) / radius) * color;
-        vec3 base = texture2D(uTarget, vUv).xyz;
-        gl_FragColor = vec4(base + splat, 1.0);
+        vec4 splat = exp(-dot(p, p) / radius) * vec4(color, pigmentAmount);
+        gl_FragColor = texture2D(uTarget, vUv) + splat;
     }
 `);
 
@@ -765,17 +791,17 @@ const dyeMassShader = compileShader(gl.FRAGMENT_SHADER, `
     uniform sampler2D uTexture;
     uniform vec2 sourceSize;
 
-    vec3 samplePigment(vec2 pixel) {
+    vec4 samplePigment(vec2 pixel) {
         if (pixel.x >= sourceSize.x || pixel.y >= sourceSize.y)
-            return vec3(0.0);
-        return texture2D(uTexture, (pixel + 0.5) / sourceSize).rgb;
+            return vec4(0.0);
+        return texture2D(uTexture, (pixel + 0.5) / sourceSize);
     }
 
     void main () {
         vec2 p = floor(gl_FragCoord.xy) * 2.0;
-        vec3 mass = samplePigment(p) + samplePigment(p + vec2(1.0, 0.0))
+        vec4 mass = samplePigment(p) + samplePigment(p + vec2(1.0, 0.0))
             + samplePigment(p + vec2(0.0, 1.0)) + samplePigment(p + vec2(1.0));
-        gl_FragColor = vec4(mass * 0.25, 1.0);
+        gl_FragColor = mass * 0.25;
     }
 `);
 
@@ -788,10 +814,10 @@ const conserveDyeShader = compileShader(gl.FRAGMENT_SHADER, `
     uniform sampler2D uCurrentMass;
 
     void main () {
-        vec3 target = texture2D(uTargetMass, vec2(0.5)).rgb;
-        vec3 current = texture2D(uCurrentMass, vec2(0.5)).rgb;
-        vec3 scale = target / max(current, vec3(1.0e-10));
-        gl_FragColor = vec4(texture2D(uTexture, vUv).rgb * scale, 1.0);
+        vec4 target = texture2D(uTargetMass, vec2(0.5));
+        vec4 current = texture2D(uCurrentMass, vec2(0.5));
+        vec4 scale = target / max(current, vec4(1.0e-10));
+        gl_FragColor = texture2D(uTexture, vUv) * scale;
     }
 `);
 
@@ -1309,7 +1335,7 @@ function clearPaint () {
     ];
 
     gl.disable(gl.BLEND);
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clearColor(0.0, 0.0, 0.0, 0.0);
     targets.forEach(target => {
         gl.viewport(0, 0, target.width, target.height);
         gl.bindFramebuffer(gl.FRAMEBUFFER, target.fbo);
@@ -1532,6 +1558,7 @@ function multipleSplats (amount) {
         color.r *= 3.0;
         color.g *= 3.0;
         color.b *= 3.0;
+        color.a *= 3.0;
         const x = Math.random();
         const y = Math.random();
         const dx = 1000 * (Math.random() - 0.5);
@@ -1541,6 +1568,8 @@ function multipleSplats (amount) {
 }
 
 function splat (x, y, dx, dy, color, options = {}) {
+    // Dye alpha stores mass, so these simulation writes must never blend.
+    gl.disable(gl.BLEND);
     const radiusScale = options.radiusScale == null ? 1.0 : options.radiusScale;
     const radius = correctRadius(config.SPLAT_RADIUS * radiusScale / 100.0);
 
@@ -1550,6 +1579,7 @@ function splat (x, y, dx, dy, color, options = {}) {
         gl.uniform1f(splatProgram.uniforms.aspectRatio, canvas.width / canvas.height);
         gl.uniform2f(splatProgram.uniforms.point, x, y);
         gl.uniform3f(splatProgram.uniforms.color, dx, dy, 0.0);
+        gl.uniform1f(splatProgram.uniforms.pigmentAmount, 0.0);
         gl.uniform1f(splatProgram.uniforms.radius, radius);
         blit(velocity.write);
         velocity.swap();
@@ -1565,6 +1595,8 @@ function splat (x, y, dx, dy, color, options = {}) {
     gl.uniform1f(splatProgram.uniforms.aspectRatio, canvas.width / canvas.height);
     gl.uniform2f(splatProgram.uniforms.point, x, y);
     gl.uniform3f(splatProgram.uniforms.color, color.r, color.g, color.b);
+    gl.uniform1f(splatProgram.uniforms.pigmentAmount,
+        color.a == null ? Math.max(color.r, color.g, color.b) : color.a);
     gl.uniform1f(splatProgram.uniforms.radius, radius);
     blit(dye.write);
     dye.swap();
@@ -1626,13 +1658,8 @@ function correctDeltaY (delta) {
 }
 
 function generateColor () {
-    let c = HSVtoRGB(Math.random(), 1.0, 1.0);
-    // Low density looked pastel on a light background. Higher pigment density
-    // keeps colors saturated without changing their hue.
-    c.r *= 0.35;
-    c.g *= 0.35;
-    c.b *= 0.35;
-    return c;
+    const pigment = EBRU_PALETTE[Math.floor(Math.random() * EBRU_PALETTE.length)];
+    return paintColorFromHex(pigment.hex, 0.35);
 }
 
 function HSVtoRGB (h, s, v) {
@@ -1822,8 +1849,10 @@ function hashCode (s) {
             letter-spacing: 0.14em;
         }
         .ebru-palette-row {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
             align-items: center;
+            justify-items: center;
             gap: 7px;
         }
         .ebru-color-swatch {
@@ -1840,9 +1869,9 @@ function hashCode (s) {
             outline-offset: -4px;
         }
         .ebru-custom-color {
-            width: 31px;
+            width: 27px;
             height: 27px;
-            margin-left: auto;
+            margin: 0;
             padding: 0;
             border: 1px solid rgba(52, 44, 37, 0.35);
             border-radius: 5px;
@@ -1871,37 +1900,17 @@ function hashCode (s) {
     palette.innerHTML = `
         <div class="ebru-palette-title" data-i18n="palette">PAINT COLOR</div>
         <div class="ebru-palette-row">
-            <button class="ebru-color-swatch selected" type="button" data-color="#9b3f34" data-i18n-aria="madder" data-i18n-title="madder" aria-label="Madder red" style="background:#9b3f34"></button>
-            <button class="ebru-color-swatch" type="button" data-color="#c17a2f" data-i18n-aria="ochre" data-i18n-title="ochre" aria-label="Ochre" style="background:#c17a2f"></button>
-            <button class="ebru-color-swatch" type="button" data-color="#28507f" data-i18n-aria="indigo" data-i18n-title="indigo" aria-label="Indigo blue" style="background:#28507f"></button>
-            <button class="ebru-color-swatch" type="button" data-color="#3f6b50" data-i18n-aria="green" data-i18n-title="green" aria-label="Earth green" style="background:#3f6b50"></button>
-            <button class="ebru-color-swatch" type="button" data-color="#5b456f" data-i18n-aria="violet" data-i18n-title="violet" aria-label="Violet" style="background:#5b456f"></button>
-            <input class="ebru-custom-color" type="color" value="#9b3f34" data-i18n-aria="customColor" data-i18n-title="customColor" aria-label="Custom paint color">
+            ${EBRU_PALETTE.map((pigment, index) => `<button class="ebru-color-swatch${index === 0 ? ' selected' : ''}" type="button" data-color="${pigment.hex}" data-i18n-aria="${pigment.name}" data-i18n-title="${pigment.name}" style="background:${pigment.hex}"></button>`).join('')}
+            <input class="ebru-custom-color" type="color" value="${EBRU_PALETTE[0].hex}" data-i18n-aria="customColor" data-i18n-title="customColor" aria-label="Custom paint color">
         </div>
     `;
     document.body.appendChild(palette);
     EbruI18n.apply(palette);
 
-    let selectedPaintHex = '#9b3f34';
+    let selectedPaintHex = EBRU_PALETTE[0].hex;
     let selectedPaintColor = paintColorFromHex(selectedPaintHex);
     const customColorInput = palette.querySelector('.ebru-custom-color');
     const colorSwatches = Array.from(palette.querySelectorAll('.ebru-color-swatch'));
-
-    function paintColorFromHex(hex) {
-        const value = parseInt(hex.slice(1), 16);
-        const rgb = {
-            r: ((value >> 16) & 255) / 255,
-            g: ((value >> 8) & 255) / 255,
-            b: (value & 255) / 255
-        };
-        const peak = Math.max(rgb.r, rgb.g, rgb.b, 0.0001);
-        const concentration = 0.95 / peak;
-        return {
-            r: rgb.r * concentration,
-            g: rgb.g * concentration,
-            b: rgb.b * concentration
-        };
-    }
 
     function selectPaintColor(hex, selectedSwatch) {
         selectedPaintHex = hex;

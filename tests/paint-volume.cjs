@@ -27,9 +27,9 @@ try {
         return pixels;
     };
     const mass = pixels => {
-        const total = [0, 0, 0];
+        const total = [0, 0, 0, 0];
         for (let i = 0; i < pixels.length; i += 4)
-            for (let c = 0; c < 3; c++) total[c] += pixels[i + c];
+            for (let c = 0; c < 4; c++) total[c] += pixels[i + c];
         return total;
     };
     const reports = [];
@@ -57,9 +57,11 @@ try {
     check(changed > initial[0] * .1, 'Paint must continue moving');
 
     const previous = mass(finalPixels);
+    render(null); // A dye write must not inherit display blending.
     splat(.7, .35, 0, 0, { r: 0, g: .95, b: 0 }, { addVelocity: false, radiusScale: 2.6 });
     let before = mass(read());
     check(before[1] > previous[1] + 100, 'A new drop must increase pigment');
+    check(Math.abs(before[0] / previous[0] - 1) < .001, 'A green drop must not duplicate existing red');
     for (let i = 0; i < 90; i++) {
         splat(.95, .5, 0, 25, {}, { addDye: false });
         step(1 / 60);
@@ -79,6 +81,46 @@ try {
     before = mass(read());
     for (let i = 0; i < 30; i++) step(1 / 60);
     verify(before, 'idle pure color');
+
+    config.DYE_RESOLUTION = 128;
+    config.SHADING = false;
+    config.TRANSPARENT = true;
+    initFramebuffers();
+    updateKeywords();
+    const pixelTarget = createFBO(1, 1, ext.formatRGBA.internalFormat, ext.formatRGBA.format, ext.halfFloatTexType, gl.NEAREST);
+    const swatches = [...document.querySelectorAll('.ebru-color-swatch')];
+    check(swatches.length === 11, 'All traditional swatches are available');
+    for (const language of ['tr', 'en']) {
+        EbruI18n.setLanguage(language);
+        check(swatches.every(swatch => swatch.title && swatch.title !== swatch.dataset.i18nTitle), 'Swatch names are translated');
+    }
+    for (const hex of [...EBRU_PALETTE.map(p => p.hex), '#000000', '#ffffff', '#153253']) {
+        clearPaint();
+        const input = document.querySelector('.ebru-custom-color');
+        input.value = hex;
+        input.dispatchEvent(new Event('change'));
+        canvas.dispatchEvent(new MouseEvent('mousedown', { button: 2, buttons: 2,
+            clientX: canvas.clientWidth / 2, clientY: canvas.clientHeight / 2 }));
+        render(pixelTarget);
+        const pixel = new Float32Array(4);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, pixelTarget.fbo);
+        gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.FLOAT, pixel);
+        check(pixel[3] > .75, hex + ': black and light colors must have visible coverage');
+        const value = parseInt(hex.slice(1), 16);
+        const rgb = [(value >> 16) & 255, (value >> 8) & 255, value & 255];
+        check(rgb.every((component, i) => Math.abs(pixel[i] / pixel[3] - component / 255) < .003),
+            hex + ': rendered color must match the selected sRGB shade');
+    }
+    clearPaint();
+    splat(.5, .5, 0, 0, paintColorFromHex('#000000'), { addVelocity: false, radiusScale: 2.6 });
+    before = mass(read());
+    check(before[3] > 0 && before.slice(0, 3).every(value => value === 0), 'Black has mass without RGB energy');
+    for (let i = 0; i < 90; i++) {
+        splat(.5, .5, 15, 8, {}, { addDye: false });
+        step(1 / 60);
+    }
+    verify(before, 'black pigment conservation');
+    reports.push({ case: '11 swatches, custom black/white/dark shades, EN/TR labels', status: 'PASS' });
     render(null);
     check(gl.getError() === gl.NO_ERROR, 'Rendering must not cause a WebGL error');
     document.body.dataset.verdict = JSON.stringify({ status: 'PASS', reports });

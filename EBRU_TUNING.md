@@ -30,7 +30,8 @@ controls and conserving the amount of pigment during spreading.
 - Dye-density dissipation is disabled (`DENSITY_DISSIPATION = 0.0`), so colors
   are not deliberately faded as simulation time passes.
 - Dye dissipation is also hard-locked to `0.0` in the advection pass and its UI
-  control is removed. A GPU reduction measures pigment per RGB channel; after
+  control is removed. A GPU reduction measures premultiplied RGB and pigment
+  amount (the alpha channel); after
   advection, concentrations are corrected to the saved amount. Only depositing
   paint, clearing, or resizing the simulation resets that amount. This prevents
   sampling from multiplying paint while leaving the velocity solver unchanged.
@@ -42,12 +43,15 @@ controls and conserving the amount of pigment during spreading.
   clearly visible against white.
 - The control panel includes an English `Clear Paint` button. It clears dye and
   residual fluid motion without stopping hand tracking or changing settings.
-- Display colors use a bounded pigment tone map instead of raw additive RGB.
-  Overlapping colors retain their hue but cannot become neon-white. The initial
+- Display colors divide premultiplied sRGB by pigment amount and use bounded
+  coverage. This preserves the selected light/dark shade, including black and
+  white; there is no peak-channel normalization or 72% brightness cap. Shading
+  affects coverage rather than tinting white pigment gray. The initial
   random-splat multiplier is reduced from `10.0` to `3.0` to avoid excessive
   dye concentration at startup.
-- A separate `PAINT COLOR` palette is fixed to the bottom-left corner. Its five
+- A separate `PAINT COLOR` palette is fixed to the bottom-left corner. Its 11
   traditional swatches and native custom color input control new paint drops.
+  Startup colors are also drawn from this palette instead of a random HSV hue.
 - Bloom and sunray rendering paths are disabled; the interface and cursor use
   solid state changes rather than neon or glow effects.
 - The camera button is a toggle. Clicking it while tracking is active stops the
@@ -90,3 +94,33 @@ Chrome is outside the default Windows location. The test uses real WebGL and
 checks pigment totals, continued motion, adding a second color, edge dragging,
 quality changes, clearing, and idle pure-color paint. It exercises native and
 manual texture filtering and allows 0.5% error for half-float GPU storage.
+It also checks the rendered shades of every preset, custom black/white/dark
+colors, black-pigment conservation, and English/Turkish swatch names.
+
+## Palette references and digital colors
+
+MEB's Ebru textbook lists red ochre, yellow oxide, indigo blues, oxide green,
+black, white, and floral red, as well as light blue obtained with white:
+https://dogm.eba.gov.tr/panel/upload/etkilesimli/kitap/Ebru/unite3/files/basic-html/page21.html
+
+M. Uğur Derman's account describes gülbahar (brick red), lök (lac crimson),
+Çamlıca earth (tobacco brown), indigo, black and white:
+https://istanbultarihi.ist/assets/uploads/pdf/istanbulda-ebru-sanati-269.pdf
+
+These sources establish pigment families, not exact screen RGB measurements.
+The following sRGB values are digital interpretations chosen for a lively,
+balanced palette; they are not spectral pigment data or a physical mixing model.
+
+| Pigment family | sRGB |
+| --- | --- |
+| Red ochre / Gülbahar | `#c94b3c` |
+| Yellow ochre | `#e3ad35` |
+| Lahor indigo | `#244d80` |
+| Ultramarine | `#365fc4` |
+| Sap green | `#3d965b` |
+| Lac crimson | `#913968` |
+| Floral red | `#e44845` |
+| Light indigo | `#7eb7d8` |
+| Çamlıca earth | `#996535` |
+| Soot black | `#242329` |
+| Pigment white | `#fffaf0` |
