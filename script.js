@@ -67,6 +67,7 @@ let config = {
     PRESSURE_ITERATIONS: 20,
     CURL: 30,
     SPLAT_RADIUS: 0.25,
+    DROP_SIZE: 100,
     SPLAT_FORCE: 6000,
     SHADING: true,
     COLORFUL: true,
@@ -241,6 +242,7 @@ function startGUI () {
     labelControl(gui.add(config, 'PRESSURE', 0.0, 1.0), 'pressure');
     labelControl(gui.add(config, 'CURL', 0, 50), 'vorticity').step(1);
     labelControl(gui.add(config, 'SPLAT_RADIUS', 0.01, 1.0), 'radius');
+    labelControl(gui.add(config, 'DROP_SIZE', 25, 200).step(5), 'dropSize');
     labelControl(gui.add(config, 'SHADING'), 'shading').onFinishChange(updateKeywords);
     labelControl(gui.add(config, 'COLORFUL'), 'colorful');
     labelControl(gui.add(config, 'PAUSED'), 'paused').listen();
@@ -2069,7 +2071,9 @@ function hashCode (s) {
         const x = Math.min(1, Math.max(0, posX / canvas.width));
         const y = Math.min(1, Math.max(0, 1.0 - posY / canvas.height));
         splat(x, y, 0, 0, selectedPaintColor, {
-            radiusScale: 2.6,
+            // The Gaussian radius parameter scales with area; square the
+            // size percentage so the visible diameter follows the slider.
+            radiusScale: 2.6 * Math.pow(config.DROP_SIZE / 100, 2),
             addVelocity: false,
             addDye: true
         });

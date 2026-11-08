@@ -16,6 +16,9 @@ controls and conserving the amount of pigment during spreading.
   canvas, losing focus or hiding the page stops dragging. The context menu is
   suppressed only on the canvas; mouse painting does not require the camera.
 - A drag does not inject a new dye blob on every camera frame.
+- The `drop size (%)` / `damla boyutu (%)` slider scales the diameter of new
+  mouse and camera drops from 25% to 200%; 100% preserves the original size.
+  It does not resize existing paint or change the dragging force.
 - Hand impulse is 32% of the original mouse/touch impulse: controlled, but
   strong enough to visibly deform the paint at normal camera frame rates.
 - Per-frame movement is capped so tracking jumps cannot sweep the whole tray.
