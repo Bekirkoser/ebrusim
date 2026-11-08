@@ -78,6 +78,7 @@ function pointerPrototype () {
 }
 
 let pointers = [];
+let flowNeedsReset = true;
 
 function createEbruPointer(id) {
     const pointer = new pointerPrototype();
@@ -1130,9 +1131,16 @@ function update () {
     if (resizeCanvas())
         initFramebuffers();
     updateColors(dt);
-    applyInputs();
-    if (!config.PAUSED)
+    const hasMovement = applyInputs();
+    if (hasMovement) flowNeedsReset = true;
+    // Even zero-dissipation advection repeatedly resamples and dilutes pigment.
+    // Keep the dye texture untouched until a tool actually moves it again.
+    if (!config.PAUSED && hasMovement)
         step(dt);
+    else if (flowNeedsReset) {
+        clearFlow();
+        flowNeedsReset = false;
+    }
     render(null);
     requestAnimationFrame(update);
 }
@@ -1169,25 +1177,29 @@ function updateColors (dt) {
 }
 
 function applyInputs () {
+    let hasMovement = false;
     pointers.forEach(p => {
         if (p.updateInput) p.updateInput();
         if (p.moved) {
             p.moved = false;
             splatPointer(p);
+            hasMovement = true;
         }
     });
+    return hasMovement;
 }
 
-function clearPaint () {
-    // Clear residual flow and pressure together with the paint so new drops
-    // added to a clean tray are not affected by old motion.
-    const targets = [
-        dye.read, dye.write,
+function clearFlow () {
+    // Prevent an old gesture's momentum from moving settled paint on the next
+    // gesture or a new drop. This never clears or redraws the pigment buffers.
+    clearSimulationTargets([
         velocity.read, velocity.write,
         pressure.read, pressure.write,
         divergence, curl
-    ];
+    ]);
+}
 
+function clearSimulationTargets (targets) {
     gl.disable(gl.BLEND);
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     targets.forEach(target => {
@@ -1196,6 +1208,12 @@ function clearPaint () {
         gl.clear(gl.COLOR_BUFFER_BIT);
     });
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+}
+
+function clearPaint () {
+    clearSimulationTargets([dye.read, dye.write]);
+    clearFlow();
+    flowNeedsReset = false;
 
     pointers.forEach(pointer => {
         pointer.moved = false;
