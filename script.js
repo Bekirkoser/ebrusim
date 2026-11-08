@@ -1598,9 +1598,31 @@ function hashCode (s) {
     ].join(';');
     document.body.appendChild(label);
 
+    const cameraReminder = document.createElement('div');
+    cameraReminder.className = 'ebru-camera-reminder';
+    cameraReminder.setAttribute('role', 'status');
+    cameraReminder.setAttribute('aria-live', 'polite');
+    cameraReminder.hidden = true;
+    document.body.appendChild(cameraReminder);
+
     // UI: ebru awl showing the hand contact point on screen.
     const cursorStyle = document.createElement('style');
     cursorStyle.textContent = `
+        .ebru-camera-reminder {
+            position: fixed;
+            right: 20px;
+            bottom: 100px;
+            z-index: 1002;
+            max-width: min(260px, calc(100vw - 40px));
+            box-sizing: border-box;
+            padding: 13px 16px;
+            border: 1px solid rgba(224, 176, 131, 0.55);
+            border-radius: 12px;
+            background: rgba(42, 34, 30, 0.96);
+            color: #fff3e7;
+            font: 14px/1.45 Arial, sans-serif;
+            pointer-events: none;
+        }
         .ebru-biz-cursor {
             position: fixed;
             left: 0;
@@ -1783,11 +1805,27 @@ function hashCode (s) {
     let handsInstance = null;
     let cameraInstance = null;
     let mediaStream = null;
+    let cameraReminderTimer = null;
     const PINCH_START_RATIO = 0.34;
     const PINCH_RELEASE_RATIO = 0.46;
     const PINCH_START_DISTANCE = 0.055;
     const PINCH_RELEASE_DISTANCE = 0.075;
     const TRACKING_DEAD_ZONE_PX = 0.4;
+
+    function hideCameraReminder() {
+        clearTimeout(cameraReminderTimer);
+        cameraReminderTimer = null;
+        cameraReminder.hidden = true;
+        cameraReminder.textContent = '';
+    }
+
+    canvas.addEventListener('click', () => {
+        if (camStarted) return;
+        clearTimeout(cameraReminderTimer);
+        cameraReminder.textContent = 'Turn on the camera to paint with your hand.';
+        cameraReminder.hidden = false;
+        cameraReminderTimer = setTimeout(hideCameraReminder, 3500);
+    });
 
     function setLabel(text, active) {
         label.style.display = 'block';
@@ -1952,6 +1990,7 @@ function hashCode (s) {
 
     async function startCamera() {
         if (camStarted) return;
+        hideCameraReminder();
         const session = ++cameraSession;
         camStarted = true;
         btn.textContent = '⏳ Loading…';
