@@ -1640,7 +1640,7 @@ function hashCode (s) {
             position: absolute;
             left: 0;
             top: 0;
-            width: 140px;
+            width: 112px;
             height: auto;
             max-width: none;
             user-select: none;
