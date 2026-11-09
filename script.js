@@ -1870,15 +1870,49 @@ function hashCode (s) {
             outline: 2px solid #f5efe3;
             outline-offset: -4px;
         }
-        .ebru-custom-color {
-            width: 27px;
-            height: 27px;
+        .ebru-custom-color-picker {
+            position: relative;
+            grid-column: 1 / -1;
+            justify-self: stretch;
+            height: 30px;
+            margin-top: 3px;
+            cursor: pointer;
+        }
+        .ebru-custom-color-picker .ebru-custom-color {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
             margin: 0;
             padding: 0;
-            border: 1px solid rgba(52, 44, 37, 0.35);
-            border-radius: 5px;
-            background: transparent;
+            opacity: 0;
             cursor: pointer;
+        }
+        .ebru-custom-color-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            height: 100%;
+            box-sizing: border-box;
+            border: 1px solid currentColor;
+            border-radius: 4px;
+            color: inherit;
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 1;
+        }
+        .ebru-custom-color-label svg { flex: none; }
+        .ebru-custom-color-picker:hover .ebru-custom-color-label {
+            background: rgba(127, 127, 127, .12);
+        }
+        .ebru-custom-color.selected + .ebru-custom-color-label {
+            background: rgba(127, 127, 127, .18);
+        }
+        .ebru-custom-color:focus-visible + .ebru-custom-color-label {
+            outline: 2px solid currentColor;
+            outline-offset: 3px;
         }
     `;
     document.head.appendChild(cursorStyle);
@@ -1903,7 +1937,16 @@ function hashCode (s) {
         <div class="ebru-palette-title" data-i18n="palette">PAINT COLOR</div>
         <div class="ebru-palette-row">
             ${EBRU_PALETTE.map((pigment, index) => `<button class="ebru-color-swatch${index === 0 ? ' selected' : ''}" type="button" data-color="${pigment.hex}" data-i18n-aria="${pigment.name}" data-i18n-title="${pigment.name}" style="background:${pigment.hex}"></button>`).join('')}
-            <input class="ebru-custom-color" type="color" value="${EBRU_PALETTE[0].hex}" data-i18n-aria="customColor" data-i18n-title="customColor" aria-label="Custom paint color">
+            <label class="ebru-custom-color-picker" data-i18n-title="customColor">
+                <input class="ebru-custom-color" type="color" value="${EBRU_PALETTE[0].hex}" data-i18n-aria="customColor" aria-label="Custom paint color">
+                <span class="ebru-custom-color-label">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="M12 8v8M8 12h8"></path>
+                    </svg>
+                    <span data-i18n="customColorAction">Custom color</span>
+                </span>
+            </label>
         </div>
     `;
     document.body.appendChild(palette);
