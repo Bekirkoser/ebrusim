@@ -1928,12 +1928,42 @@ function hashCode (s) {
             letter-spacing: 0.14em;
         }
         .ebru-palette-row {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+        .ebru-palette-swatches {
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
+            grid-template-columns: repeat(6, minmax(0, 1fr));
             align-items: center;
             justify-items: center;
             gap: 7px;
+            max-height: min(150px, 25vh);
+            overflow-y: auto;
+            padding: 2px;
+            scrollbar-width: thin;
         }
+        .ebru-palette-actions { display: flex; gap: 6px; }
+        .ebru-palette-actions button {
+            flex: 1;
+            min-width: 0;
+            min-height: 30px;
+            padding: 5px 4px;
+            border: 1px solid currentColor;
+            border-radius: 4px;
+            background: transparent;
+            color: inherit;
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: 500;
+            line-height: 1.3;
+            cursor: pointer;
+        }
+        .ebru-palette-actions button:not(:disabled):hover {
+            background: rgba(127, 127, 127, .12);
+        }
+        .ebru-palette-actions button:disabled { opacity: .4; cursor: default; }
+        .ebru-palette-notice { margin: 0; font-size: 11px; line-height: 1.4; }
         .ebru-color-swatch {
             width: 24px;
             height: 24px;
@@ -1949,8 +1979,7 @@ function hashCode (s) {
         }
         .ebru-custom-color-picker {
             position: relative;
-            grid-column: 1 / -1;
-            justify-self: stretch;
+            flex: none;
             height: 30px;
             margin-top: 3px;
             cursor: pointer;
@@ -2008,12 +2037,22 @@ function hashCode (s) {
     document.body.appendChild(mouseCursor);
 
     // Paint palette independent from the main dat.GUI panel.
+    const paletteStorageKey = 'ebru-palette-v1';
+    const defaultPaletteColors = EBRU_PALETTE.map(pigment => pigment.hex);
+    let paletteColors = [...defaultPaletteColors];
+    try {
+        const saved = JSON.parse(localStorage.getItem(paletteStorageKey));
+        if (Array.isArray(saved) && saved.every(hex => typeof hex === 'string' && /^#[0-9a-f]{6}$/i.test(hex))) {
+            paletteColors = [...new Set(saved.map(hex => hex.toLowerCase()))];
+        }
+    } catch { /* Fall back to the original pigments if storage is unavailable. */ }
+
     const palette = document.createElement('div');
     palette.className = 'ebru-color-palette';
     palette.innerHTML = `
         <div class="ebru-palette-title" data-i18n="palette">PAINT COLOR</div>
         <div class="ebru-palette-row">
-            ${EBRU_PALETTE.map((pigment, index) => `<button class="ebru-color-swatch${index === 0 ? ' selected' : ''}" type="button" data-color="${pigment.hex}" data-i18n-aria="${pigment.name}" data-i18n-title="${pigment.name}" style="background:${pigment.hex}"></button>`).join('')}
+            <div class="ebru-palette-swatches"></div>
             <label class="ebru-custom-color-picker" data-i18n-title="customColor">
                 <input class="ebru-custom-color" type="color" value="${EBRU_PALETTE[0].hex}" data-i18n-aria="customColor" aria-label="Custom paint color">
                 <span class="ebru-custom-color-label">
@@ -2024,33 +2063,105 @@ function hashCode (s) {
                     <span data-i18n="customColorAction">Custom color</span>
                 </span>
             </label>
+            <div class="ebru-palette-actions">
+                <button class="ebru-palette-add" type="button" data-i18n="addToPalette">Add to palette</button>
+                <button class="ebru-palette-remove" type="button" data-i18n="removeFromPalette">Remove color</button>
+            </div>
+            <p class="ebru-palette-notice" role="status" data-i18n="paletteSessionOnly" hidden>Your palette will only be kept for this session.</p>
         </div>
     `;
     document.body.appendChild(palette);
     EbruI18n.apply(palette);
 
-    let selectedPaintHex = EBRU_PALETTE[0].hex;
-    let selectedPaintColor = paintColorFromHex(selectedPaintHex);
+    const swatchGrid = palette.querySelector('.ebru-palette-swatches');
     const customColorInput = palette.querySelector('.ebru-custom-color');
-    const colorSwatches = Array.from(palette.querySelectorAll('.ebru-color-swatch'));
+    const addColorButton = palette.querySelector('.ebru-palette-add');
+    const removeColorButton = palette.querySelector('.ebru-palette-remove');
+    const paletteNotice = palette.querySelector('.ebru-palette-notice');
+    let selectedPaintHex = paletteColors[0] || customColorInput.value;
+    let selectedPaintColor = paintColorFromHex(selectedPaintHex);
 
-    function selectPaintColor(hex, selectedSwatch) {
-        selectedPaintHex = hex;
-        selectedPaintColor = paintColorFromHex(hex);
-        toolCursor.style.setProperty('--paint-color', hex);
-        colorSwatches.forEach(swatch => swatch.classList.toggle('selected', swatch === selectedSwatch));
-        customColorInput.classList.toggle('selected', selectedSwatch === null);
+    function refreshPaletteSelection() {
+        const saved = paletteColors.includes(selectedPaintHex);
+        swatchGrid.querySelectorAll('.ebru-color-swatch').forEach(swatch => {
+            const selected = swatch.dataset.color === selectedPaintHex;
+            swatch.classList.toggle('selected', selected);
+            swatch.setAttribute('aria-pressed', String(selected));
+        });
+        customColorInput.classList.toggle('selected', !saved);
+        addColorButton.disabled = saved;
+        removeColorButton.disabled = !saved;
     }
 
-    colorSwatches.forEach(swatch => {
-        swatch.addEventListener('click', () => selectPaintColor(swatch.dataset.color, swatch));
+    function selectPaintColor(hex) {
+        selectedPaintHex = hex.toLowerCase();
+        selectedPaintColor = paintColorFromHex(selectedPaintHex);
+        toolCursor.style.setProperty('--paint-color', selectedPaintHex);
+        refreshPaletteSelection();
+    }
+
+    function renderPalette() {
+        swatchGrid.replaceChildren();
+        paletteColors.forEach(hex => {
+            const swatch = document.createElement('button');
+            swatch.className = 'ebru-color-swatch';
+            swatch.type = 'button';
+            swatch.dataset.color = hex;
+            swatch.style.background = hex;
+            const pigment = EBRU_PALETTE.find(pigment => pigment.hex === hex);
+            if (pigment) {
+                swatch.dataset.i18nAria = pigment.name;
+                swatch.dataset.i18nTitle = pigment.name;
+            } else {
+                swatch.setAttribute('aria-label', EbruI18n.t('customColor') + ' ' + hex.toUpperCase());
+                swatch.title = hex.toUpperCase();
+            }
+            swatch.addEventListener('click', () => selectPaintColor(hex));
+            swatchGrid.appendChild(swatch);
+        });
+        EbruI18n.apply(swatchGrid);
+        refreshPaletteSelection();
+    }
+
+    function savePalette() {
+        try {
+            localStorage.setItem(paletteStorageKey, JSON.stringify(paletteColors));
+            paletteNotice.hidden = true;
+        } catch {
+            // Editing and painting still work when storage is blocked or full.
+            paletteNotice.hidden = false;
+        }
+    }
+
+    addColorButton.addEventListener('click', () => {
+        if (paletteColors.includes(selectedPaintHex)) return;
+        paletteColors.push(selectedPaintHex);
+        savePalette();
+        renderPalette();
+        // The Add button is now disabled, so focus the newly added swatch.
+        const added = Array.from(swatchGrid.children).find(swatch => swatch.dataset.color === selectedPaintHex);
+        if (added) {
+            added.focus({ preventScroll: true });
+            added.scrollIntoView({ block: 'nearest' });
+        }
     });
-    // Keep the custom swatch independent of presets and apply both live and
-    // committed picker changes. Clicking it also reselects its existing color.
-    const selectCustomColor = () => selectPaintColor(customColorInput.value, null);
+    removeColorButton.addEventListener('click', () => {
+        if (!paletteColors.includes(selectedPaintHex)) return;
+        paletteColors = paletteColors.filter(hex => hex !== selectedPaintHex);
+        // Keep painting with the same color; the Add button can restore it.
+        customColorInput.value = selectedPaintHex;
+        savePalette();
+        renderPalette();
+        addColorButton.focus({ preventScroll: true });
+    });
+
+    // The native picker continues to apply its color immediately.
+    const selectCustomColor = () => selectPaintColor(customColorInput.value);
     customColorInput.addEventListener('input', selectCustomColor);
     customColorInput.addEventListener('change', selectCustomColor);
     customColorInput.addEventListener('click', selectCustomColor);
+    window.addEventListener('ebru-language-change', renderPalette);
+    renderPalette();
     toolCursor.style.setProperty('--paint-color', selectedPaintHex);
 
     // Both inputs use the same force, radius, movement cap and dye behavior.
