@@ -22,6 +22,14 @@ window.EbruI18n = (() => {
             vorticity: 'vorticity', radius: 'splat radius', dropSize: 'drop size (%)', shading: 'shading', colorful: 'colorful',
             paused: 'paused', clear: 'Clear Paint', capture: 'Capture', background: 'background color',
             transparent: 'transparent', screenshot: 'take screenshot',
+            videoStart: 'Start video recording', videoStop: 'Stop and download',
+            videoSaving: 'Preparing video…', videoRecording: 'Recording. Stop to download.',
+            videoReady: 'Canvas only · silent video · up to 1080p / 30 fps',
+            videoUnsupported: 'Video recording is unavailable in this browser.',
+            videoError: 'Could not record the video. Please try again.',
+            videoEmpty: 'No video frames captured. Record a little longer.',
+            totalVisitors: 'Total visitors', visitorsHint: 'Approximate browser count since 9 Nov 2026. A browser is counted once.',
+            visitorsUnavailable: 'Visitor count is temporarily unavailable.',
             openControls: 'Open Controls', closeControls: 'Close Controls',
             palette: 'PAINT COLOR', oxideRed: 'Red ochre · Gülbahar', oxideYellow: 'Yellow ochre',
             lahor: 'Lahor indigo', ultramarine: 'Ultramarine blue', sapGreen: 'Sap green',
@@ -56,6 +64,14 @@ window.EbruI18n = (() => {
             vorticity: 'girdap', radius: 'damla yarıçapı', dropSize: 'damla boyutu (%)', shading: 'gölgelendirme', colorful: 'çok renkli',
             paused: 'duraklat', clear: 'Boyayı Temizle', capture: 'Görüntü Kaydı', background: 'arka plan rengi',
             transparent: 'saydam arka plan', screenshot: 'görüntüyü kaydet',
+            videoStart: 'Video kaydını başlat', videoStop: 'Durdur ve indir',
+            videoSaving: 'Video hazırlanıyor…', videoRecording: 'Kaydediliyor. İndirmek için durdur.',
+            videoReady: 'Ebru alanı · sessiz video · en çok 1080p / 30 fps',
+            videoUnsupported: 'Bu tarayıcı video kaydını desteklemiyor.',
+            videoError: 'Video kaydedilemedi. Lütfen tekrar dene.',
+            videoEmpty: 'Görüntü kaydedilemedi. Biraz daha uzun kayıt al.',
+            totalVisitors: 'Toplam ziyaretçi', visitorsHint: '9 Kasım 2026’dan itibaren tarayıcı bazlı yaklaşık sayı. Aynı tarayıcı bir kez sayılır.',
+            visitorsUnavailable: 'Ziyaretçi sayısı şu anda alınamıyor.',
             openControls: 'Ayarları Aç', closeControls: 'Ayarları Kapat',
             palette: 'BOYA RENGİ', oxideRed: 'Aşı kırmızısı · Gülbahar', oxideYellow: 'Oksit sarı',
             lahor: 'Lahor çividi', ultramarine: 'Çamaşır çividi', sapGreen: 'Sap yeşili',
@@ -123,3 +139,4 @@ window.EbruI18n = (() => {
     refresh();
     return { t, apply, bind, setLanguage, get language() { return language; } };
 })();
+

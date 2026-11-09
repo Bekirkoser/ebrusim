@@ -87,6 +87,8 @@ let config = {
     SUNRAYS_WEIGHT: 1.0,
 }
 
+const videoRecorder = new EbruVideoRecorder(canvas, () => config.BACK_COLOR);
+
 function pointerPrototype () {
     this.id = -1;
     this.texcoordX = 0;
@@ -253,6 +255,58 @@ function startGUI () {
     labelControl(captureFolder.add(config, 'TRANSPARENT'), 'transparent');
     labelControl(captureFolder.add({ fun: captureScreenshot }, 'fun'), 'screenshot');
 
+    const videoControl = captureFolder.add({ record: () => {
+        if (videoRecorder.state === 'recording') videoRecorder.stop();
+        else if (videoRecorder.state === 'idle') videoRecorder.start();
+    } }, 'record');
+    videoControl.__li.setAttribute('role', 'button');
+    videoControl.__li.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        if (videoRecorder.state === 'recording') videoRecorder.stop();
+        else if (videoRecorder.state === 'idle') videoRecorder.start();
+    });
+    const videoStatus = document.createElement('li');
+    videoStatus.setAttribute('role', 'status');
+    videoStatus.style.cssText = 'height:auto;min-height:27px;line-height:1.5;padding:6px 8px;font-size:11px;white-space:normal';
+    captureFolder.__ul.appendChild(videoStatus);
+    function updateVideoControl() {
+        const t = EbruI18n.t;
+        const active = videoRecorder.state === 'recording';
+        const stopping = videoRecorder.state === 'stopping';
+        const disabled = !videoRecorder.supported || stopping;
+        const seconds = videoRecorder.elapsedSeconds;
+        const time = Math.floor(seconds / 60).toString().padStart(2, '0') + ':' + (seconds % 60).toString().padStart(2, '0');
+        const text = active ? t('videoStop') + ' · ' + time : t(stopping ? 'videoSaving' : 'videoStart');
+        videoControl.name(text);
+        videoControl.__li.tabIndex = disabled ? -1 : 0;
+        videoControl.__li.setAttribute('aria-label', text);
+        videoControl.__li.setAttribute('aria-disabled', String(disabled));
+        videoControl.__li.style.pointerEvents = disabled ? 'none' : '';
+        videoControl.__li.style.color = active ? 'var(--ebru-madder, #ce8069)' : '';
+        videoControl.__li.style.opacity = disabled ? '.5' : '';
+        const statusKey = videoRecorder.errorKey || (!videoRecorder.supported ? 'videoUnsupported' : active ? 'videoRecording' : stopping ? 'videoSaving' : 'videoReady');
+        const status = t(statusKey);
+        if (videoStatus.textContent !== status) videoStatus.textContent = status;
+    }
+    videoRecorder.onStateChange = updateVideoControl;
+
+    const visitorRow = document.createElement('li');
+    visitorRow.style.cssText = 'display:flex;justify-content:space-between;gap:8px;height:auto;min-height:27px;line-height:1.5;padding:7px 5px;font-size:11px';
+    const visitorLabel = document.createElement('span');
+    const visitorValue = document.createElement('span');
+    visitorValue.style.cssText = 'font-variant-numeric:tabular-nums;font-weight:600';
+    visitorValue.textContent = '…';
+    visitorRow.append(visitorLabel, visitorValue);
+    gui.__ul.appendChild(visitorRow);
+    function updateVisitorCounter() {
+        visitorLabel.textContent = EbruI18n.t('totalVisitors');
+        visitorRow.title = EbruI18n.t(visitorCounter.error ? 'visitorsUnavailable' : 'visitorsHint');
+        visitorValue.textContent = visitorCounter.error ? '—' : visitorCounter.count === null ? '…' : new Intl.NumberFormat(EbruI18n.language).format(visitorCounter.count);
+    }
+    const visitorCounter = new EbruVisitorCounter(updateVisitorCounter);
+    visitorCounter.start();
+
     function translateControls() {
         const t = EbruI18n.t;
         translatedControls.forEach(({ controller, key }) => {
@@ -264,6 +318,8 @@ function startGUI () {
             option.textContent = t(qualityKeys[option.value]);
         });
         captureFolder.name = t('capture');
+        updateVideoControl();
+        updateVisitorCounter();
         dat.GUI.TEXT_OPEN = t('openControls');
         dat.GUI.TEXT_CLOSED = t('closeControls');
         gui.__closeButton.textContent = t(gui.closed ? 'openControls' : 'closeControls');
@@ -1281,6 +1337,7 @@ function update () {
     if (!config.PAUSED)
         step(dt);
     render(null);
+    videoRecorder.captureFrame();
     requestAnimationFrame(update);
 }
 
@@ -2503,3 +2560,4 @@ function hashCode (s) {
     });
 
 })();
+
