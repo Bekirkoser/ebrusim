@@ -1752,37 +1752,114 @@ function hashCode (s) {
     video.setAttribute('muted', '');
     document.body.appendChild(video);
 
+    // Keep mouse feedback, camera status and the camera button in one stack.
+    const inputControls = document.createElement('div');
+    inputControls.className = 'ebru-input-controls';
+    document.body.appendChild(inputControls);
+
     // UI: kamera butonu
     const btn = document.createElement('button');
     btn.className = 'ebru-camera-button';
     EbruI18n.bind(btn, 'camera');
     btn.style.cssText = [
-        'position:fixed', 'bottom:20px', 'right:20px',
+        'position:relative',
         'padding:10px 20px', 'background:rgba(0,0,0,0.6)',
         'color:#fff', 'border:1px solid rgba(255,255,255,0.3)',
         'border-radius:24px', 'font-size:14px', 'cursor:pointer',
         'z-index:999', 'backdrop-filter:blur(6px)',
         'transition:all 0.2s', 'letter-spacing:0.05em'
     ].join(';');
-    document.body.appendChild(btn);
+    inputControls.appendChild(btn);
 
     // UI: durum etiketi
     const label = document.createElement('div');
     label.className = 'ebru-camera-status';
     label.setAttribute('role', 'status');
     label.style.cssText = [
-        'position:fixed', 'bottom:62px', 'right:20px',
+        'position:relative',
         'padding:5px 14px', 'background:rgba(0,0,0,0.55)',
         'color:rgba(255,255,255,0.5)', 'border-radius:16px',
         'font-size:11px', 'letter-spacing:0.15em',
         'text-transform:uppercase', 'z-index:999',
         'font-family:sans-serif', 'display:none'
     ].join(';');
-    document.body.appendChild(label);
+    inputControls.insertBefore(label, btn);
+
+    // Mouse button feedback is visual only and never intercepts canvas input.
+    const mouseIndicator = document.createElement('div');
+    mouseIndicator.className = 'ebru-mouse-indicator';
+    mouseIndicator.setAttribute('aria-hidden', 'true');
+    mouseIndicator.innerHTML = `
+        <svg width="34" height="50" viewBox="0 0 40 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect class="ebru-mouse-body" x="2" y="2" width="36" height="56" rx="18"/>
+            <path class="ebru-mouse-left" d="M20 2C10.06 2 2 10.06 2 20V27H20V2Z"/>
+            <path class="ebru-mouse-right" d="M20 2C29.94 2 38 10.06 38 20V27H20V2Z"/>
+            <rect class="ebru-mouse-outline" x="2" y="2" width="36" height="56" rx="18"/>
+            <path class="ebru-mouse-outline" d="M2 27H38M20 2V27"/>
+            <rect class="ebru-mouse-wheel" x="18" y="11" width="4" height="9" rx="2"/>
+        </svg>`;
+    inputControls.insertBefore(mouseIndicator, label);
+
+    function setMouseButtons(buttons) {
+        mouseIndicator.classList.toggle('is-left-pressed', (buttons & 1) !== 0);
+        mouseIndicator.classList.toggle('is-right-pressed', (buttons & 2) !== 0);
+    }
+    const syncMouseButtons = event => setMouseButtons(event.buttons);
+    window.addEventListener('mousedown', syncMouseButtons, true);
+    window.addEventListener('mouseup', syncMouseButtons, true);
+    // Recover the held state when returning to the page after an outside release.
+    window.addEventListener('mousemove', syncMouseButtons, true);
+    window.addEventListener('mouseout', event => {
+        if (!event.relatedTarget) setMouseButtons(0);
+    });
+    window.addEventListener('blur', () => setMouseButtons(0));
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) setMouseButtons(0);
+    });
+
 
     // The supplied hand images share a hotspot at the paint contact point.
     const cursorStyle = document.createElement('style');
     cursorStyle.textContent = `
+        .ebru-input-controls {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            max-width: calc(100vw - 40px);
+            pointer-events: none;
+        }
+        .ebru-input-controls .ebru-camera-button { pointer-events: auto; }
+        .ebru-input-controls .ebru-camera-status { max-width: 100%; }
+        .ebru-mouse-indicator {
+            display: flex;
+            color: var(--ebru-ink, #c2ccc8);
+            pointer-events: none;
+        }
+        .ebru-mouse-body { fill: var(--ebru-paper, #26241b); fill-opacity: .97; }
+        .ebru-mouse-left, .ebru-mouse-right {
+            fill: currentColor;
+            fill-opacity: .12;
+            transition: fill 100ms ease, fill-opacity 100ms ease;
+        }
+        .ebru-mouse-outline { stroke: currentColor; stroke-width: 1.8; }
+        .ebru-mouse-wheel { fill: currentColor; }
+        .is-left-pressed .ebru-mouse-left,
+        .is-right-pressed .ebru-mouse-right {
+            fill: var(--ebru-madder, #ce8069);
+            fill-opacity: 1;
+            transition: none;
+        }
+        @media (hover: none) and (pointer: coarse) {
+            .ebru-mouse-indicator { display: none; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .ebru-mouse-left, .ebru-mouse-right { transition: none; }
+        }
         .ebru-hand-cursor {
             position: fixed;
             left: 0;
