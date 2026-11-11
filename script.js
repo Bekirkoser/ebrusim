@@ -232,7 +232,7 @@ function supportRenderTextureFormat (gl, internalFormat, format, type) {
 }
 
 function startGUI () {
-    var gui = new dat.GUI({ width: 300 });
+    var gui = new dat.GUI({ width: 300, closeOnTop: true });
     const translatedControls = [];
     function labelControl(controller, key) {
         translatedControls.push({ controller, key });
@@ -305,16 +305,31 @@ function startGUI () {
         dat.GUI.TEXT_OPEN = t('openControls');
         dat.GUI.TEXT_CLOSED = t('closeControls');
         gui.__closeButton.textContent = t(gui.closed ? 'openControls' : 'closeControls');
+        syncControlsState();
+    }
+    function syncControlsState() {
+        gui.__closeButton.setAttribute('aria-expanded', String(!gui.closed));
+        window.dispatchEvent(new CustomEvent('ebru-controls-change', { detail: { open: !gui.closed } }));
     }
     window.addEventListener('ebru-language-change', translateControls);
-    translateControls();
 
-    if (isMobile())
+    gui.__closeButton.setAttribute('role', 'button');
+    gui.__closeButton.tabIndex = 0;
+    gui.__closeButton.addEventListener('click', syncControlsState);
+    gui.__closeButton.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        gui.closed = !gui.closed;
+        translateControls();
+    });
+
+    if (isMobile() || window.EbruDevice.compact)
         gui.close();
+    translateControls();
 }
 
 function isMobile () {
-    return /Mobi|Android/i.test(navigator.userAgent);
+    return window.EbruDevice.touch;
 }
 
 function captureScreenshot () {
@@ -1764,7 +1779,7 @@ function getTextureScale (texture, width, height) {
 }
 
 function scaleByPixelRatio (input) {
-    let pixelRatio = window.devicePixelRatio || 1;
+    let pixelRatio = Math.min(window.devicePixelRatio || 1, isMobile() ? 2 : 3);
     return Math.floor(input * pixelRatio);
 }
 
@@ -2117,7 +2132,7 @@ function hashCode (s) {
     const palette = document.createElement('div');
     palette.className = 'ebru-color-palette';
     palette.innerHTML = `
-        <div class="ebru-palette-title" data-i18n="palette">PAINT COLOR</div>
+        <button class="ebru-palette-title ebru-palette-toggle" type="button" aria-expanded="true" data-i18n="palette">PAINT COLOR</button>
         <div class="ebru-palette-row">
             <div class="ebru-palette-swatches"></div>
             <label class="ebru-custom-color-picker" data-i18n-title="customColor">
@@ -2138,6 +2153,31 @@ function hashCode (s) {
         </div>
     `;
     document.body.appendChild(palette);
+    const paletteToggle = palette.querySelector('.ebru-palette-toggle');
+    function setPaletteCollapsed(collapsed) {
+        palette.classList.toggle('is-collapsed', collapsed);
+        paletteToggle.setAttribute('aria-expanded', String(!collapsed));
+    }
+    paletteToggle.addEventListener('click', () => {
+        setPaletteCollapsed(!palette.classList.contains('is-collapsed'));
+    });
+    const shortViewport = window.matchMedia('(max-height: 500px)');
+    function fitPalette() {
+        if (window.EbruDevice.touch && shortViewport.matches) setPaletteCollapsed(true);
+    }
+    shortViewport.addEventListener('change', fitPalette);
+    window.addEventListener('ebru-controls-change', event => {
+        if (event.detail.open && (window.EbruDevice.touch || window.EbruDevice.compact))
+            setPaletteCollapsed(true);
+    });
+    fitPalette();
+    function measurePalette() {
+        const height = palette.getBoundingClientRect().height;
+        if (height > 0) document.documentElement.style.setProperty('--ebru-palette-height', height + 'px');
+    }
+    if (window.ResizeObserver) new ResizeObserver(measurePalette).observe(palette);
+    window.addEventListener('resize', measurePalette);
+    measurePalette();
     EbruI18n.apply(palette);
 
     const swatchGrid = palette.querySelector('.ebru-palette-swatches');
@@ -2231,7 +2271,7 @@ function hashCode (s) {
     renderPalette();
     toolCursor.style.setProperty('--paint-color', selectedPaintHex);
 
-    // Both inputs use the same force, radius, movement cap and dye behavior.
+    // All inputs share the same force, radius, movement cap and dye behavior.
     const HAND_POINTER_ID = 99;
     const handPointer = createEbruPointer(HAND_POINTER_ID);
     const mousePointer = createEbruPointer(-1);
@@ -2264,6 +2304,34 @@ function hashCode (s) {
         mouseCursor.style.display = 'none';
     }
 
+    const touchInput = new EbruTouchInput(canvas, {
+        onContact: hideMouseCursor,
+        onTap(point) {
+            const local = mousePosition({ clientX: point.x, clientY: point.y });
+            const position = mouseCanvasPosition(local.x, local.y);
+            addPaintDrop(position.x, position.y);
+        },
+        onDragStart(point) {
+            const local = mousePosition({ clientX: point.x, clientY: point.y });
+            mouseTarget = local;
+            mouseX = local.x;
+            mouseY = local.y;
+            const position = mouseCanvasPosition(local.x, local.y);
+            updatePointerDownData(mousePointer, -2, position.x, position.y);
+        },
+        onDragMove(point) {
+            mouseTarget = mousePosition({ clientX: point.x, clientY: point.y });
+        },
+        onDragEnd(cancelled) {
+            // Consume the last movement even if the finger lifted before RAF.
+            if (!cancelled) {
+                mousePointer.updateInput();
+                if (mousePointer.moved) splatPointer(mousePointer);
+            }
+            hideMouseCursor();
+        }
+    });
+
     // Sample the latest mouse position once per simulation frame so high-rate
     // mouse events cannot overwrite an unconsumed movement delta.
     mousePointer.updateInput = () => {
@@ -2274,13 +2342,16 @@ function hashCode (s) {
         const position = mouseCanvasPosition(mouseX, mouseY);
         updatePointerMoveData(mousePointer, position.x, position.y);
         const rect = canvas.getBoundingClientRect();
-        updateToolCursor(mouseX + rect.left, mouseY + rect.top, 'move', mouseCursor);
+        if (!touchInput.dragging)
+            updateToolCursor(mouseX + rect.left, mouseY + rect.top, 'move', mouseCursor);
     };
 
     canvas.addEventListener('mouseenter', event => {
+        if (touchInput.suppressesMouse) return;
         updateToolCursor(event.clientX, event.clientY, 'tracking', mouseCursor);
     });
     canvas.addEventListener('mousedown', event => {
+        if (touchInput.suppressesMouse || event.sourceCapabilities?.firesTouchEvents) return;
         if (event.button !== 0 && event.button !== 2) return;
         event.preventDefault();
         if ((event.buttons & 3) === 3) {
@@ -2303,6 +2374,7 @@ function hashCode (s) {
     });
 
     canvas.addEventListener('mousemove', event => {
+        if (touchInput.suppressesMouse) return;
         if (!mousePointer.down) {
             updateToolCursor(event.clientX, event.clientY, 'tracking', mouseCursor);
             return;
@@ -2496,6 +2568,28 @@ function hashCode (s) {
         if (showStatus) setLabel('cameraOff', false);
     }
 
+    let handTrackingReady = null;
+    function loadHandTracking() {
+        if (!handTrackingReady) {
+            const libraries = [
+                ['Hands', 'https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.js'],
+                ['Camera', 'https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js']
+            ];
+            handTrackingReady = Promise.all(libraries.map(([name, src]) => {
+                if (window[name]) return Promise.resolve();
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = src;
+                    script.crossOrigin = 'anonymous';
+                    script.onload = resolve;
+                    script.onerror = () => { script.remove(); reject(new Error('Hand tracking unavailable')); };
+                    document.head.appendChild(script);
+                });
+            })).catch(error => { handTrackingReady = null; throw error; });
+        }
+        return handTrackingReady;
+    }
+
     async function startCamera() {
         if (camStarted) return;
         const session = ++cameraSession;
@@ -2505,6 +2599,8 @@ function hashCode (s) {
         setLabel('loadingTracking', false);
 
         try {
+            await loadHandTracking();
+            if (session !== cameraSession || !camStarted) return;
             // MediaPipe Hands
             const hands = new Hands({
                 locateFile: (file) =>

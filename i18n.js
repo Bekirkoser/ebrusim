@@ -5,7 +5,7 @@ window.EbruI18n = (() => {
     const messages = {
         en: {
             pageTitle: 'Digital Ebru',
-            description: 'Make digital ebru with mouse controls or camera hand tracking.',
+            description: 'Make digital ebru with touch, mouse controls or camera hand tracking.',
             language: 'Language', openHelp: 'Open instructions', closeHelp: 'Close instructions',
             howTo: 'HOW TO', makeEbru: 'How to Use',
             helpLead: 'Use your mouse or turn on Camera',
@@ -48,7 +48,7 @@ window.EbruI18n = (() => {
         },
         tr: {
             pageTitle: 'Dijital Ebru',
-            description: 'Fareyle veya kameradan el takibiyle dijital ebru yapın.',
+            description: 'Dokunarak, fareyle veya kameradan el takibiyle dijital ebru yapın.',
             language: 'Dil', openHelp: 'Yönergeleri aç', closeHelp: 'Yönergeleri kapat',
             howTo: 'NASIL YAPILIR', makeEbru: 'Nasıl Kullanılır?',
             helpLead: 'Fareyi kullan veya kamerayı aç',
@@ -90,6 +90,26 @@ window.EbruI18n = (() => {
             cameraError: 'Kamera başlatılamadı. Bağlantını kontrol edip tekrar dene.'
         }
     };
+    const touchMessages = {
+        en: {
+            helpLead: 'Tap to drop paint · drag to move it',
+            moveTitle: 'Drag to Move',
+            moveHelp: 'Slide one finger across the canvas to push the paint. Dragging does not add new paint.',
+            dropTitle: 'Tap to Add Paint',
+            dropHelp: 'Briefly tap the canvas once to add a drop in your selected color. Lift your finger before the next tap.',
+            colorHelp: 'Tap a color in the bottom palette. Swipe the color row to see more, or pick a custom color.',
+            customizeHelp: 'Open Controls at the top for flow and capture settings. Use the eye button to hide or show all panels.'
+        },
+        tr: {
+            helpLead: 'Dokunarak boya ekle · sürükleyerek it',
+            moveTitle: 'Sürükleyerek İt',
+            moveHelp: 'Parmağını ebru alanında sürükleyerek boyayı hareket ettir. Sürükleme yeni boya eklemez.',
+            dropTitle: 'Dokunarak Boya Ekle',
+            dropHelp: 'Seçtiğin renkte bir damla eklemek için ebru alanına bir kez kısa dokun. Yeni damla için parmağını kaldırıp tekrar dokun.',
+            colorHelp: 'Alttaki paletten bir renge dokun. Diğer renkleri görmek için renk sırasını kaydır veya özel rengini seç.',
+            customizeHelp: 'Akış ve kayıt seçenekleri için üstteki Ayarları Aç düğmesine dokun. Göz simgesiyle tüm panelleri gizleyip gösterebilirsin.'
+        }
+    };
     const storageKey = 'ebru-language';
     let language = 'en';
     try {
@@ -97,7 +117,7 @@ window.EbruI18n = (() => {
         if (saved === 'en' || saved === 'tr') language = saved;
     } catch { /* Language selection still works when storage is unavailable. */ }
 
-    const t = key => messages[language][key] || messages.en[key] || key;
+    const t = key => (window.EbruDevice.touch && touchMessages[language][key]) || messages[language][key] || messages.en[key] || key;
     function apply(root = document) {
         const targets = [
             ['data-i18n', null], ['data-i18n-aria', 'aria-label'],
@@ -138,6 +158,7 @@ window.EbruI18n = (() => {
     document.querySelectorAll('[data-language]').forEach(button => {
         button.addEventListener('click', () => setLanguage(button.dataset.language));
     });
+    window.addEventListener('ebru-device-change', refresh);
     refresh();
     return { t, apply, bind, setLanguage, get language() { return language; } };
 })();
