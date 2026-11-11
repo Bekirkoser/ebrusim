@@ -1609,12 +1609,12 @@ function splatPointer (pointer) {
 }
 
 function multipleSplats (amount) {
+    // A saturated cool palette keeps the opening vivid on the white canvas.
+    const startupColors = ['#1357ff', '#7c2cff', '#ed239a', '#00a8dc'];
+    const offset = Math.floor(Math.random() * startupColors.length);
+    amount = Math.min(amount, 12);
     for (let i = 0; i < amount; i++) {
-        const color = generateColor();
-        color.r *= 3.0;
-        color.g *= 3.0;
-        color.b *= 3.0;
-        color.a *= 3.0;
+        const color = paintColorFromHex(startupColors[(i + offset) % startupColors.length], 2.2);
         const x = Math.random();
         const y = Math.random();
         const dx = 1000 * (Math.random() - 0.5);
