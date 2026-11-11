@@ -161,6 +161,58 @@ body .ebru-color-palette { background: var(--ebru-surface); color: var(--ebru-in
 .ebru-color-palette .ebru-color-swatch.selected,
 .ebru-color-palette .ebru-custom-color.selected { border-color: #e0e0e0; outline-color: var(--ebru-paper); }
 button:focus-visible, .dg input:focus-visible, .dg select:focus-visible { outline: 2px solid var(--ebru-indigo); outline-offset: 2px; }
+.ebru-point-cursor {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 0;
+    display: none;
+    pointer-events: none;
+    z-index: 1000;
+}
+.ebru-cursor-ring, .ebru-cursor-ripple {
+    position: absolute;
+    left: 0;
+    top: 0;
+    box-sizing: border-box;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+}
+.ebru-cursor-ring {
+    width: 22px;
+    height: 22px;
+    border: 1.5px solid #171717;
+    box-shadow: 0 0 0 1.5px #fff;
+    transition: width 100ms ease, height 100ms ease, background-color 100ms ease;
+}
+.ebru-cursor-dot {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 5px;
+    height: 5px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: var(--ebru-paint-color, #c94b3c);
+    box-shadow: 0 0 0 1px #fff;
+}
+.ebru-point-cursor.pinching .ebru-cursor-ring {
+    width: 16px;
+    height: 16px;
+    border-color: var(--ebru-paint-color, #c94b3c);
+    background: rgba(19, 87, 255, .22);
+    background: color-mix(in srgb, var(--ebru-paint-color, #c94b3c) 22%, transparent);
+    box-shadow: 0 0 0 1.5px #fff, 0 0 0 2.5px rgba(0, 0, 0, .5);
+}
+.ebru-cursor-ripple {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--ebru-paint-color, #c94b3c);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, .4), inset 0 0 0 1px rgba(255, 255, 255, .65);
+    opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) { .ebru-cursor-ring { transition: none; } }
 @media (prefers-reduced-motion: reduce) { .ebru-info-overlay, .ebru-info-button, .ebru-info-close, .ebru-ui-toggle { animation: none; transition: none; } }
 @media (prefers-reduced-transparency: reduce) {
     :root { --ebru-surface: #000; --ebru-surface-compact: #000; --ebru-surface-dialog: #000; }
@@ -191,7 +243,7 @@ body .ebru-color-palette { left: calc(var(--ebru-edge) + env(safe-area-inset-lef
 .ebru-color-palette.is-collapsed .ebru-palette-toggle::after { content: '+'; }
 .ebru-color-palette.is-collapsed .ebru-palette-row { display: none; }
 body .ebru-input-controls { right: calc(var(--ebru-edge) + env(safe-area-inset-right)); bottom: calc(var(--ebru-edge) + env(safe-area-inset-bottom)); }
-.ebru-touch .ebru-mouse-indicator, .ebru-touch .ebru-mouse-cursor { display: none !important; }
+.ebru-touch .ebru-mouse-indicator { display: none !important; }
 .ebru-touch .ebru-ui-toggle { width: 44px; height: 44px; }
 .ebru-touch .ebru-camera-button { min-height: 44px; }
 .ebru-touch .dg.main .close-button { height: 44px; line-height: 44px; font-size: 13px; }

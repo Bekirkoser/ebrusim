@@ -33,13 +33,13 @@ window.EbruTouchInput = class EbruTouchInput {
         event.preventDefault();
         this.lastContact = Date.now();
         this.contacts.add(event.pointerId);
-        this.callbacks.onContact();
         if (this.contacts.size > 1 || this.multitouch) {
             this.multitouch = true;
             this.cancel(false);
             return;
         }
         const start = this.point(event);
+        this.callbacks.onContact(start);
         this.gesture = { id: event.pointerId, start, started: Date.now(), dragging: false };
         this.canvas.setPointerCapture(event.pointerId);
     }
@@ -61,15 +61,19 @@ window.EbruTouchInput = class EbruTouchInput {
         this.lastContact = Date.now();
         const gesture = this.gesture;
         if (gesture?.id === event.pointerId) {
+            let tapped = false;
             if (!cancelled) this.move(event); // A quick flick can finish between frames.
             this.gesture = null;
             if (gesture.dragging) this.callbacks.onDragEnd(cancelled);
             else if (!cancelled && !this.multitouch && Date.now() - gesture.started <= 400) {
                 const rect = this.canvas.getBoundingClientRect();
                 if (event.clientX >= rect.left && event.clientX <= rect.right
-                    && event.clientY >= rect.top && event.clientY <= rect.bottom)
+                    && event.clientY >= rect.top && event.clientY <= rect.bottom) {
                     this.callbacks.onTap(this.point(event));
+                    tapped = true;
+                }
             }
+            this.callbacks.onRelease?.(tapped);
             if (this.canvas.hasPointerCapture(event.pointerId)) this.canvas.releasePointerCapture(event.pointerId);
         }
         this.contacts.delete(event.pointerId);
@@ -81,6 +85,7 @@ window.EbruTouchInput = class EbruTouchInput {
         this.gesture = null;
         if (gesture) {
             if (gesture.dragging) this.callbacks.onDragEnd(true);
+            this.callbacks.onRelease?.(false);
             if (this.canvas.hasPointerCapture(gesture.id)) this.canvas.releasePointerCapture(gesture.id);
         }
         if (clearContacts) {

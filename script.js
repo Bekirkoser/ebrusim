@@ -1900,7 +1900,7 @@ function hashCode (s) {
     });
 
 
-    // The supplied hand images share a hotspot at the paint contact point.
+    // Input controls and the paint palette share the theme stylesheet.
     const cursorStyle = document.createElement('style');
     cursorStyle.textContent = `
         .ebru-input-controls {
@@ -1941,52 +1941,6 @@ function hashCode (s) {
         }
         @media (prefers-reduced-motion: reduce) {
             .ebru-mouse-left, .ebru-mouse-right { transition: none; }
-        }
-        .ebru-hand-cursor {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 0;
-            height: 0;
-            display: none;
-            pointer-events: none;
-            z-index: 1000;
-            opacity: 0.92;
-            transition: opacity 100ms ease;
-        }
-        .ebru-hand-cursor img {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 112px;
-            height: auto;
-            max-width: none;
-            user-select: none;
-            transition: opacity 120ms ease;
-        }
-        .ebru-hand-point {
-            transform: translate(-30.6%, -15.6%);
-            opacity: 1;
-        }
-        .ebru-hand-pinch {
-            transform: translate(-29.3%, -46.9%);
-            opacity: 0;
-        }
-        .ebru-hand-cursor.active { opacity: 1; }
-        .ebru-hand-cursor.pinching .ebru-hand-point { opacity: 0; }
-        .ebru-hand-cursor.pinching .ebru-hand-pinch { opacity: 1; }
-        .ebru-hand-visual { transform-origin: 0 0; }
-        .ebru-hand-cursor.pinching .ebru-hand-visual {
-            animation: ebru-hand-close 180ms ease-out;
-        }
-        @keyframes ebru-hand-close {
-            0% { transform: scale(1); }
-            45% { transform: scale(0.96); }
-            100% { transform: scale(1); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .ebru-hand-cursor, .ebru-hand-cursor img { transition: none; }
-            .ebru-hand-cursor.pinching .ebru-hand-visual { animation: none; }
         }
         .ebru-color-palette {
             position: fixed;
@@ -2105,18 +2059,11 @@ function hashCode (s) {
     `;
     document.head.appendChild(cursorStyle);
 
-    const toolCursor = document.createElement('div');
-    toolCursor.className = 'ebru-hand-cursor';
-    toolCursor.setAttribute('aria-hidden', 'true');
-    toolCursor.innerHTML = `
-        <div class="ebru-hand-visual">
-            <img class="ebru-hand-point" src="assets/hand-point.png" alt="" draggable="false" width="1536" height="1024">
-            <img class="ebru-hand-pinch" src="assets/hand-pinch.png" alt="" draggable="false" width="1536" height="1024">
-        </div>`;
-    document.body.appendChild(toolCursor);
-    const mouseCursor = toolCursor.cloneNode(true);
-    mouseCursor.classList.add('ebru-mouse-cursor');
-    document.body.appendChild(mouseCursor);
+    const handPointCursor = new EbruPointCursor('ebru-camera-cursor');
+    const mousePointCursor = new EbruPointCursor('ebru-mouse-cursor');
+    const touchPointCursor = new EbruPointCursor('ebru-touch-cursor');
+    const toolCursor = handPointCursor.element;
+    const mouseCursor = mousePointCursor.element;
 
     // Paint palette independent from the main dat.GUI panel.
     const paletteStorageKey = 'ebru-palette-v1';
@@ -2203,7 +2150,7 @@ function hashCode (s) {
     function selectPaintColor(hex) {
         selectedPaintHex = hex.toLowerCase();
         selectedPaintColor = paintColorFromHex(selectedPaintHex);
-        toolCursor.style.setProperty('--paint-color', selectedPaintHex);
+        document.documentElement.style.setProperty('--ebru-paint-color', selectedPaintHex);
         refreshPaletteSelection();
     }
 
@@ -2269,7 +2216,7 @@ function hashCode (s) {
     customColorInput.addEventListener('click', selectCustomColor);
     window.addEventListener('ebru-language-change', renderPalette);
     renderPalette();
-    toolCursor.style.setProperty('--paint-color', selectedPaintHex);
+    document.documentElement.style.setProperty('--ebru-paint-color', selectedPaintHex);
 
     // All inputs share the same force, radius, movement cap and dye behavior.
     const HAND_POINTER_ID = 99;
@@ -2301,15 +2248,19 @@ function hashCode (s) {
 
     function hideMouseCursor() {
         stopMouseDrag();
-        mouseCursor.style.display = 'none';
+        mousePointCursor.hide();
     }
 
     const touchInput = new EbruTouchInput(canvas, {
-        onContact: hideMouseCursor,
+        onContact(point) {
+            hideMouseCursor();
+            touchPointCursor.show(point.x, point.y);
+        },
         onTap(point) {
             const local = mousePosition({ clientX: point.x, clientY: point.y });
             const position = mouseCanvasPosition(local.x, local.y);
             addPaintDrop(position.x, position.y);
+            touchPointCursor.flash(point.x, point.y);
         },
         onDragStart(point) {
             const local = mousePosition({ clientX: point.x, clientY: point.y });
@@ -2318,6 +2269,7 @@ function hashCode (s) {
             mouseY = local.y;
             const position = mouseCanvasPosition(local.x, local.y);
             updatePointerDownData(mousePointer, -2, position.x, position.y);
+            touchPointCursor.show(point.x, point.y, 'move');
         },
         onDragMove(point) {
             mouseTarget = mousePosition({ clientX: point.x, clientY: point.y });
@@ -2329,6 +2281,10 @@ function hashCode (s) {
                 if (mousePointer.moved) splatPointer(mousePointer);
             }
             hideMouseCursor();
+            touchPointCursor.hide();
+        },
+        onRelease(tapped) {
+            if (!tapped) touchPointCursor.hide();
         }
     });
 
@@ -2342,7 +2298,9 @@ function hashCode (s) {
         const position = mouseCanvasPosition(mouseX, mouseY);
         updatePointerMoveData(mousePointer, position.x, position.y);
         const rect = canvas.getBoundingClientRect();
-        if (!touchInput.dragging)
+        if (touchInput.dragging)
+            touchPointCursor.show(mouseX + rect.left, mouseY + rect.top, 'move');
+        else
             updateToolCursor(mouseX + rect.left, mouseY + rect.top, 'move', mouseCursor);
     };
 
@@ -2364,6 +2322,7 @@ function hashCode (s) {
             stopMouseDrag();
             addPaintDrop(position.x, position.y);
             updateToolCursor(event.clientX, event.clientY, 'drop', mouseCursor);
+            mousePointCursor.pulse();
         } else {
             mouseTarget = point;
             mouseX = point.x;
@@ -2417,12 +2376,7 @@ function hashCode (s) {
     }
 
     function updateToolCursor(x, y, mode, cursor = toolCursor) {
-        cursor.style.display = 'block';
-        cursor.style.left = x + 'px';
-        cursor.style.top = y + 'px';
-        cursor.classList.toggle('active', mode !== 'tracking');
-        cursor.classList.toggle('drop-mode', mode === 'drop');
-        cursor.classList.toggle('pinching', mode === 'move');
+        (cursor === mouseCursor ? mousePointCursor : handPointCursor).show(x, y, mode);
     }
 
     function distance(p1, p2) {
@@ -2494,6 +2448,7 @@ function hashCode (s) {
             // Add only one drop for each middle-finger pinch closure.
             if (dropGesture && !isDroppingPaint) {
                 addPaintDrop(posX, posY);
+                handPointCursor.pulse();
                 isDroppingPaint = true;
             } else if (!middleCandidate) {
                 isDroppingPaint = false;
@@ -2517,8 +2472,7 @@ function hashCode (s) {
             isDroppingPaint = false;
             prevX = -1;
             prevY = -1;
-            toolCursor.style.display = 'none';
-            toolCursor.classList.remove('active', 'drop-mode', 'pinching');
+            handPointCursor.hide();
             setLabel('showHand', false);
         }
     }
@@ -2529,8 +2483,7 @@ function hashCode (s) {
         isDroppingPaint = false;
         prevX = -1;
         prevY = -1;
-        toolCursor.style.display = 'none';
-        toolCursor.classList.remove('active', 'drop-mode', 'pinching');
+        handPointCursor.hide();
     }
 
     async function stopCamera(showStatus = true) {

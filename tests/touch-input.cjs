@@ -23,25 +23,28 @@ canvas.getBoundingClientRect = () => ({ left: 20, top: 30, right: 320, bottom: 5
 const context = vm.createContext({ window, document, Date: { now: () => now } });
 vm.runInContext(fs.readFileSync(path.join(root, 'touch-input.js'), 'utf8'), context);
 let actions = [];
+let releases = [];
 const input = new window.EbruTouchInput(canvas, {
     onContact: () => actions.push('contact'),
     onTap: point => actions.push(['tap', point.x, point.y]),
     onDragStart: point => actions.push(['start', point.x, point.y]),
     onDragMove: point => actions.push(['move', point.x, point.y]),
-    onDragEnd: cancelled => actions.push(['end', cancelled])
+    onDragEnd: cancelled => actions.push(['end', cancelled]),
+    onRelease: tapped => releases.push(tapped)
 });
 function emit(name, x = 100, y = 100, id = 1, type = 'touch') {
     const event = { pointerId: id, pointerType: type, button: 0, clientX: x, clientY: y, preventDefault() {} };
     (name === 'pointerup' || name === 'pointercancel' ? window : canvas).emit(name, event);
 }
 const taps = () => actions.filter(action => action[0] === 'tap');
-const reset = () => { input.cancel(); actions = []; now += 1000; };
+const reset = () => { input.cancel(); actions = []; releases = []; now += 1000; };
 
 emit('pointerdown');
 assert.equal(taps().length, 0, 'Touch-down must not add paint before intent is known');
 emit('pointermove', 104, 102);
 emit('pointerup', 104, 102);
 assert.equal(taps().length, 1, 'A tap with small finger jitter adds exactly one drop');
+assert.deepEqual(releases, [true], 'A completed tap keeps its brief drop feedback');
 assert.equal(captures.size, 0);
 assert.equal(input.suppressesMouse, true, 'Compatibility mouse events must be suppressed');
 now += 751;
@@ -66,6 +69,14 @@ reset();
 emit('pointerdown');
 emit('pointercancel');
 assert.equal(taps().length, 0, 'Cancelled touches must not add paint');
+assert.deepEqual(releases, [false], 'Cancellation dismisses pending touch feedback');
+
+reset();
+emit('pointerdown');
+canvas.emit('lostpointercapture', { pointerId: 1 });
+emit('pointerup');
+assert.deepEqual(releases, [false], 'Lost pointer capture dismisses feedback exactly once');
+assert.equal(taps().length, 0);
 
 reset();
 emit('pointerdown');
