@@ -246,7 +246,6 @@ function startGUI () {
     labelControl(gui.add(config, 'SPLAT_RADIUS', 0.01, 1.0), 'radius');
     labelControl(gui.add(config, 'DROP_SIZE', 25, 200).step(5), 'dropSize');
     labelControl(gui.add(config, 'SHADING'), 'shading').onFinishChange(updateKeywords);
-    labelControl(gui.add(config, 'COLORFUL'), 'colorful');
     labelControl(gui.add(config, 'PAUSED'), 'paused').listen();
     labelControl(gui.add({ fun: clearPaint }, 'fun'), 'clear');
 
@@ -1820,7 +1819,7 @@ function hashCode (s) {
     EbruI18n.bind(btn, 'camera');
     btn.style.cssText = [
         'position:relative',
-        'padding:10px 20px', 'background:rgba(0,0,0,0.6)',
+        'padding:10px 20px', 'background:var(--ebru-surface-compact)',
         'color:#fff', 'border:1px solid rgba(255,255,255,0.3)',
         'border-radius:24px', 'font-size:14px', 'cursor:pointer',
         'z-index:999', 'backdrop-filter:blur(6px)',
@@ -1834,7 +1833,7 @@ function hashCode (s) {
     label.setAttribute('role', 'status');
     label.style.cssText = [
         'position:relative',
-        'padding:5px 14px', 'background:rgba(0,0,0,0.55)',
+        'padding:5px 14px', 'background:var(--ebru-surface-compact)',
         'color:rgba(255,255,255,0.5)', 'border-radius:16px',
         'font-size:11px', 'letter-spacing:0.15em',
         'text-transform:uppercase', 'z-index:999',
@@ -1897,7 +1896,7 @@ function hashCode (s) {
             color: var(--ebru-ink, #c2ccc8);
             pointer-events: none;
         }
-        .ebru-mouse-body { fill: var(--ebru-paper, #26241b); fill-opacity: .97; }
+        .ebru-mouse-body { fill: var(--ebru-surface-compact); }
         .ebru-mouse-left, .ebru-mouse-right {
             fill: currentColor;
             fill-opacity: .12;
@@ -2560,4 +2559,3 @@ function hashCode (s) {
     });
 
 })();
-
