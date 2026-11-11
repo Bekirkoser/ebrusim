@@ -290,22 +290,6 @@ function startGUI () {
     }
     videoRecorder.onStateChange = updateVideoControl;
 
-    const visitorRow = document.createElement('li');
-    visitorRow.style.cssText = 'display:flex;justify-content:space-between;gap:8px;height:auto;min-height:27px;line-height:1.5;padding:7px 5px;font-size:11px';
-    const visitorLabel = document.createElement('span');
-    const visitorValue = document.createElement('span');
-    visitorValue.style.cssText = 'font-variant-numeric:tabular-nums;font-weight:600';
-    visitorValue.textContent = '…';
-    visitorRow.append(visitorLabel, visitorValue);
-    gui.__ul.appendChild(visitorRow);
-    function updateVisitorCounter() {
-        visitorLabel.textContent = EbruI18n.t('totalVisitors');
-        visitorRow.title = EbruI18n.t(visitorCounter.error ? 'visitorsUnavailable' : 'visitorsHint');
-        visitorValue.textContent = visitorCounter.error ? '—' : visitorCounter.count === null ? '…' : new Intl.NumberFormat(EbruI18n.language).format(visitorCounter.count);
-    }
-    const visitorCounter = new EbruVisitorCounter(updateVisitorCounter);
-    visitorCounter.start();
-
     function translateControls() {
         const t = EbruI18n.t;
         translatedControls.forEach(({ controller, key }) => {
@@ -318,7 +302,6 @@ function startGUI () {
         });
         captureFolder.name = t('capture');
         updateVideoControl();
-        updateVisitorCounter();
         dat.GUI.TEXT_OPEN = t('openControls');
         dat.GUI.TEXT_CLOSED = t('closeControls');
         gui.__closeButton.textContent = t(gui.closed ? 'openControls' : 'closeControls');

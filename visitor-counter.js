@@ -1,8 +1,8 @@
 'use strict';
 
-// A shared public total; local storage only prevents counting this browser twice.
+// Background visitor counting; local storage prevents counting this browser twice.
 window.EbruVisitorCounter = class EbruVisitorCounter {
-    constructor(onChange) {
+    constructor(onChange = () => {}) {
         this.onChange = onChange;
         this.key = 'ebrusim-art-visitors-72860256b50144dab8f9ef3815be91a6';
         this.storageKey = 'ebru-counted-' + this.key;
@@ -28,7 +28,7 @@ window.EbruVisitorCounter = class EbruVisitorCounter {
         this.counted = true;
         for (const storageName of ['localStorage', 'sessionStorage']) {
             try { window[storageName].setItem(this.storageKey, '1'); }
-            catch { /* The current page can still show the shared total. */ }
+            catch { /* The current page still remembers this visit in memory. */ }
         }
     }
 
@@ -75,3 +75,7 @@ window.EbruVisitorCounter = class EbruVisitorCounter {
         return this.load();
     }
 };
+
+// Start independently of dat.GUI and WebGL so hiding the UI never stops counting.
+window.ebruVisitorCounter = new EbruVisitorCounter();
+window.ebruVisitorCounter.start();
