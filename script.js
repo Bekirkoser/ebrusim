@@ -1854,7 +1854,35 @@ function hashCode (s) {
             <path class="ebru-mouse-outline" d="M2 27H38M20 2V27"/>
             <rect class="ebru-mouse-wheel" x="18" y="11" width="4" height="9" rx="2"/>
         </svg>`;
-    inputControls.insertBefore(mouseIndicator, label);
+    const feedbackRow = document.createElement('div');
+    feedbackRow.className = 'ebru-input-feedback';
+    inputControls.insertBefore(feedbackRow, label);
+    feedbackRow.appendChild(mouseIndicator);
+
+    const uiToggle = document.createElement('button');
+    uiToggle.className = 'ebru-ui-toggle';
+    uiToggle.type = 'button';
+    uiToggle.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/>
+            <circle cx="12" cy="12" r="3"/>
+            <path class="ebru-ui-hide-mark" d="m3 3 18 18"/>
+        </svg>`;
+    feedbackRow.appendChild(uiToggle);
+
+    function updateUiToggle() {
+        const hidden = document.body.classList.contains('ebru-ui-hidden');
+        const text = EbruI18n.t(hidden ? 'showUi' : 'hideUi');
+        uiToggle.setAttribute('aria-label', text);
+        uiToggle.setAttribute('aria-pressed', String(hidden));
+        uiToggle.title = text;
+    }
+    uiToggle.addEventListener('click', () => {
+        document.body.classList.toggle('ebru-ui-hidden');
+        updateUiToggle();
+    });
+    window.addEventListener('ebru-language-change', updateUiToggle);
+    updateUiToggle();
 
     function setMouseButtons(buttons) {
         mouseIndicator.classList.toggle('is-left-pressed', (buttons & 1) !== 0);

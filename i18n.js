@@ -31,6 +31,7 @@ window.EbruI18n = (() => {
             totalVisitors: 'Total visitors', visitorsHint: 'Approximate browser count since 9 Nov 2026. A browser is counted once.',
             visitorsUnavailable: 'Visitor count is temporarily unavailable.',
             openControls: 'Open Controls', closeControls: 'Close Controls',
+            hideUi: 'Hide all panels', showUi: 'Show all panels',
             palette: 'PAINT COLOR', oxideRed: 'Red ochre · Gülbahar', oxideYellow: 'Yellow ochre',
             lahor: 'Lahor indigo', ultramarine: 'Ultramarine blue', sapGreen: 'Sap green',
             lac: 'Lac crimson', flowerRed: 'Floral red', lightIndigo: 'Light indigo',
@@ -73,6 +74,7 @@ window.EbruI18n = (() => {
             totalVisitors: 'Toplam ziyaretçi', visitorsHint: '9 Kasım 2026’dan itibaren tarayıcı bazlı yaklaşık sayı. Aynı tarayıcı bir kez sayılır.',
             visitorsUnavailable: 'Ziyaretçi sayısı şu anda alınamıyor.',
             openControls: 'Ayarları Aç', closeControls: 'Ayarları Kapat',
+            hideUi: 'Tüm panelleri gizle', showUi: 'Tüm panelleri göster',
             palette: 'BOYA RENGİ', oxideRed: 'Aşı kırmızısı · Gülbahar', oxideYellow: 'Oksit sarı',
             lahor: 'Lahor çividi', ultramarine: 'Çamaşır çividi', sapGreen: 'Sap yeşili',
             lac: 'Lök · Vişneçürüğü', flowerRed: 'Çiçek kırmızısı', lightIndigo: 'Açık çivit mavisi',
@@ -139,4 +141,3 @@ window.EbruI18n = (() => {
     refresh();
     return { t, apply, bind, setLanguage, get language() { return language; } };
 })();
-

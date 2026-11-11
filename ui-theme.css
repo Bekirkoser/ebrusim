@@ -37,6 +37,35 @@
 }
 .ebru-language button[aria-pressed="true"] { background: var(--ebru-control-hover); color: #fff; }
 .ebru-camera-status { max-width: calc(100vw - 40px); box-sizing: border-box; line-height: 1.5; }
+.ebru-input-feedback { display: flex; align-items: center; gap: 8px; }
+.ebru-ui-toggle {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 1px solid var(--ebru-line);
+    border-radius: 50%;
+    background: var(--ebru-surface-compact);
+    color: var(--ebru-ink);
+    cursor: pointer;
+    pointer-events: auto;
+    transition: opacity 150ms ease;
+}
+.ebru-ui-toggle:hover { background: var(--ebru-surface); }
+body.ebru-ui-hidden .dg.ac,
+body.ebru-ui-hidden .ebru-info-button,
+body.ebru-ui-hidden .ebru-language,
+body.ebru-ui-hidden .ebru-info-overlay,
+body.ebru-ui-hidden .ebru-color-palette,
+body.ebru-ui-hidden .ebru-camera-button,
+body.ebru-ui-hidden .ebru-camera-status,
+body.ebru-ui-hidden .ebru-mouse-indicator { display: none !important; }
+body.ebru-ui-hidden .ebru-ui-toggle { opacity: .35; }
+body.ebru-ui-hidden .ebru-ui-toggle:hover,
+body.ebru-ui-hidden .ebru-ui-toggle:focus-visible { opacity: .9; }
+body.ebru-ui-hidden .ebru-ui-hide-mark { display: none; }
 html[lang="tr"] .dg .property-name { width: 49%; font-size: 10px; }
 html[lang="tr"] .dg .c { width: 51%; }
 @media (max-width: 600px) {
@@ -137,7 +166,7 @@ body .ebru-color-palette { background: var(--ebru-surface); color: var(--ebru-in
 .ebru-color-palette .ebru-color-swatch.selected,
 .ebru-color-palette .ebru-custom-color.selected { border-color: #e0e0e0; outline-color: var(--ebru-paper); }
 button:focus-visible, .dg input:focus-visible, .dg select:focus-visible { outline: 2px solid var(--ebru-indigo); outline-offset: 2px; }
-@media (prefers-reduced-motion: reduce) { .ebru-info-overlay, .ebru-info-button, .ebru-info-close { animation: none; transition: none; } }
+@media (prefers-reduced-motion: reduce) { .ebru-info-overlay, .ebru-info-button, .ebru-info-close, .ebru-ui-toggle { animation: none; transition: none; } }
 @media (prefers-reduced-transparency: reduce) {
     :root { --ebru-surface: #000; --ebru-surface-compact: #000; --ebru-surface-dialog: #000; }
     .ebru-info-overlay { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0, 0, 0, .8); }
