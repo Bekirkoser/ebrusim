@@ -343,6 +343,7 @@ function captureScreenshot () {
     let captureCanvas = textureToCanvas(texture, target.width, target.height);
     let datauri = captureCanvas.toDataURL();
     downloadURI('fluid.png', datauri);
+    window.ebruAnalytics?.track('image_save');
     URL.revokeObjectURL(datauri);
 }
 
@@ -1606,6 +1607,10 @@ function splatPointer (pointer) {
         radiusScale: pointer.radiusScale,
         addDye: pointer.addDye
     });
+    if (!pointer.addDye && !pointer.analyticsDragging && deltaLength > 0) {
+        pointer.analyticsDragging = true;
+        window.ebruAnalytics?.track('drag_start');
+    }
 }
 
 function multipleSplats (amount) {
@@ -1672,6 +1677,7 @@ window.addEventListener('keydown', e => {
 });
 
 function updatePointerDownData (pointer, id, posX, posY) {
+    pointer.analyticsDragging = false;
     pointer.id = id;
     pointer.down = true;
     pointer.moved = false;
@@ -1692,9 +1698,11 @@ function updatePointerMoveData (pointer, posX, posY) {
     pointer.deltaX = correctDeltaX(pointer.texcoordX - pointer.prevTexcoordX);
     pointer.deltaY = correctDeltaY(pointer.texcoordY - pointer.prevTexcoordY);
     pointer.moved = Math.abs(pointer.deltaX) > 0 || Math.abs(pointer.deltaY) > 0;
+    if (pointer.moved) window.ebruAnalytics?.activity();
 }
 
 function updatePointerUpData (pointer) {
+    pointer.analyticsDragging = false;
     pointer.down = false;
     pointer.moved = false;
     pointer.deltaX = 0;
@@ -2401,6 +2409,7 @@ function hashCode (s) {
             addVelocity: false,
             addDye: true
         });
+        window.ebruAnalytics?.track('paint_drop');
     }
 
     function onHandResults(results) {
@@ -2593,6 +2602,7 @@ function hashCode (s) {
             });
             cameraInstance = camera;
             camera.start();
+            window.ebruAnalytics?.track('camera_start');
 
             EbruI18n.bind(btn, 'cameraOn');
             btn.style.opacity = '1';

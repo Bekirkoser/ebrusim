@@ -123,6 +123,7 @@ window.EbruVideoRecorder = class EbruVideoRecorder {
             const extension = mimeType.startsWith('video/mp4') ? 'mp4' : 'webm';
             const filename = 'ebrusim-' + new Date().toISOString().replace(/[:.]/g, '-') + '.' + extension;
             this.download(blob, filename);
+            window.ebruAnalytics?.track('video_save');
             this.errorKey = '';
         } catch {
             this.errorKey = session.chunks.length ? 'videoError' : 'videoEmpty';
