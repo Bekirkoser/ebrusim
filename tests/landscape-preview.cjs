@@ -1,0 +1,25 @@
+// Isolated layout fixture for environments without a WebGL context. This file is
+// never copied into an APK: the Android build regenerates www from the app source.
+const fs = require('node:fs');
+const path = require('node:path');
+const root = path.resolve(__dirname, '..');
+const output = path.join(root, 'android/app/src/main/assets/www');
+let html = fs.readFileSync(path.join(output, 'index.html'), 'utf8');
+const source = fs.readFileSync(path.join(root, 'script.js'), 'utf8');
+const palette = source.match(/palette\.innerHTML = `([\s\S]*?)`;/)[1].replace('${EBRU_PALETTE[0].hex}', '#c94b3c');
+const colors = [...source.matchAll(/hex: '(#[0-9a-f]{6})'/g)].map(x => x[1]);
+const fixture = `
+window.config = { DROP_SIZE: 100, VELOCITY_DISSIPATION: .2, CURL: 30, DYE_RESOLUTION: 512, PAUSED: false };
+window.initFramebuffers = () => {};
+window.EbruStudio = { clear() {}, recorder: { state: 'idle', supported: true, errorKey: '', elapsedSeconds: 0, onStateChange() {}, start() { window.EbruMobile.showVideo(new Blob([], {type:'video/mp4'})); }, stop() {} } };
+const palette = document.createElement('div'); palette.className = 'ebru-color-palette';
+palette.innerHTML = ${JSON.stringify(palette)}; document.body.append(palette);
+const swatches = palette.querySelector('.ebru-palette-swatches');
+${JSON.stringify(colors)}.forEach((hex,i) => { const button=document.createElement('button'); button.className='ebru-color-swatch'+(!i?' selected':''); button.style.background=hex; button.setAttribute('aria-label',hex); swatches.append(button); });
+EbruI18n.apply(palette);
+const input = document.createElement('div');input.className='ebru-input-controls';input.innerHTML='<button class="ebru-ui-toggle" aria-label="Hide panels">◉</button>';document.body.append(input);
+`;
+html = html.replace(/<script src="\.\/script\.js[^\"]*"><\/script>/, '<script>' + fixture + '</script>');
+fs.writeFileSync(path.join(output, '_layout-fixture.html'), html);
+fs.writeFileSync(path.join(output, '_layout-preview.html'), `<!doctype html><html><meta charset="utf-8"><style>body{margin:0;background:#34373a;color:#eee;font:14px system-ui;display:grid;justify-content:center;gap:16px;padding:20px}iframe{border:8px solid #151515;border-radius:25px;box-shadow:0 16px 50px #0005;width:844px;height:360px}p{margin:0;color:#bbb}</style><p>Android yatay arayüz kontrolü · 844 × 360 · yalnızca yerleşim, grafik motoru çalıştırılmaz</p><iframe src="_layout-fixture.html" title="Android landscape layout"></iframe></html>`);
+console.log('Generated isolated Android layout fixture');

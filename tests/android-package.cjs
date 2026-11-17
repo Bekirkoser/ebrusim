@@ -8,6 +8,8 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 assert.doesNotMatch(html, /usage-analytics\.js|visitor-counter\.js|https:\/\/cdn/);
 assert.match(html, /connect-src 'none'/);
 assert.match(html, /native-bridge\.js/);
+assert.match(html, /android-ui\/landscape\.css/);
+assert.match(html, /android-ui\/landscape\.js/);
 for (const match of html.matchAll(/(?:src|href)="([^"#]+)"/g)) {
     const file = match[1].split('?')[0];
     if (file.startsWith('http')) continue;
@@ -15,6 +17,7 @@ for (const match of html.matchAll(/(?:src|href)="([^"#]+)"/g)) {
 }
 const manifest = fs.readFileSync('android/app/src/main/AndroidManifest.xml', 'utf8');
 assert.doesNotMatch(manifest, /<uses-permission/);
+assert.match(manifest, /android:screenOrientation="sensorLandscape"/);
 assert.match(manifest, /android:exported="false" android:grantUriPermissions="true"/);
 const before = fs.readFileSync(path.join(root, 'script.js'));
 execFileSync(process.execPath, ['scripts/build-android.cjs']);

@@ -1,7 +1,7 @@
 # Ebrusim Android — ilk sürüm
 
 Android uygulaması `android/` klasöründedir. İnternet bağlantısı olmadan çalışır;
-ebrusim.art sitesini açmaz. Paket kimliği `art.ebrusim.app`, sürüm `1.0.0` (1).
+ebrusim.art sitesini açmaz. Paket kimliği `art.ebrusim.app`, sürüm `1.1.0` (2).
 Android 8.0+ ve OpenGL ES 3 destekli cihazlar hedeflenir; target/compile SDK 36.
 
 ## Telefonunda denemek
@@ -61,7 +61,7 @@ Keystore ve parolalar `.gitignore` kapsamındadır; Git'e ekleme. İmzalı paket
 
 - Kısa dokunma boya ekler; parmak/kalem sürüklemesi mevcut boyayı iter.
 - Türkçe/İngilizce yönergeler; renk paleti, özel renk ve akış ayarları.
-- Telefon/tablet ve yatay/dikey ekran; sistem çubukları, ekran çentiği ve klavye sınırları.
+- Telefonlarda iki yöne de dönebilen yatay ekran; sistem çubukları, ekran çentiği ve klavye sınırları.
 - Çalışmalarım: uygulama yeniden açıldığında kalan yerel görüntü galerisi.
 - PNG paylaşımı ve Android dosya seçicisinden cihaza kayıt; geniş depolama izni istemez.
 - Destekleyen WebView sürümlerinde sessiz video; 45 saniyeye ve en çok 1280×720
@@ -77,7 +77,9 @@ kaybolabilir. Çıkmadan önce Kaydet'e bas. Uygulamayı kaldırmak kayıtları 
 
 ## Yayından önce cihaz kontrolü
 
-- Küçük telefon, büyük telefon ve tablette; dikey ve yatay görünüm.
+- Küçük telefon, büyük telefon ve tablette yatay görünüm; telefonu iki yöne çevir.
+- Üst araç çubuğu, alttaki sürekli açık renk paleti ve sağdan açılan ayarlar.
+- Video önizlemesinde solda video, sağda paylaş/kaydet; kısa ekranda taşma olmaması.
 - Parmağın/kalemin kısa dokunması, sürükleme, çoklu dokunma ve kesilen hareket.
 - Renk seçimi, palette yatay kaydırma, ayarlar, panelleri gizleme/gösterme.
 - Kaydet → Çalışmalarım → uygulamayı kapat/aç → görüntünün kaldığını doğrula.
@@ -96,3 +98,9 @@ bu testler gerçek cihazda GPU, paylaşım ve dosya seçici denemesinin yerini t
 
 Google Play SDK şartları: https://support.google.com/googleplay/android-developer/answer/11926878
 Android Gradle Plugin: https://developer.android.com/build/releases/agp-8-13-0-release-notes
+
+## 1.1.0 yatay test sürümü
+
+Debug APK, `art.ebrusim.app.landscape` kimliği ve **Ebrusim Yatay** adıyla ayrı kurulur. Eski test uygulaması ve galerisi silinmez. Önceki çalışmalar eski uygulamada kalır; yeni test uygulamasına otomatik taşınmaz. Release AAB asıl `art.ebrusim.app` kimliğini kullanır.
+
+Arayüz değişiklikleri `android-ui/` klasöründedir; iPhone projesi ve ortak mobil arayüz dosyaları değiştirilmez.

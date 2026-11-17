@@ -1,0 +1,94 @@
+/* Android-only landscape studio: compact tools above, paint colors below. */
+.ebru-android-landscape { --android-chrome: rgba(18, 19, 21, .9); --android-border: rgba(255,255,255,.13); }
+.ebru-android-landscape .dg.ac,
+.ebru-android-landscape .ebru-app-about { display: none !important; }
+.ebru-android-landscape .ebru-info-button { top: 8px; left: 8px; width: 40px; height: 40px; font-size: 20px; border-radius: 12px; }
+.ebru-android-landscape .ebru-language { top: 8px; left: 56px; padding: 2px; border-radius: 12px; height: 36px; box-sizing: border-box; }
+.ebru-android-landscape .ebru-language button { min-height: 30px; min-width: 30px; padding: 4px 6px; font-size: 11px; }
+.ebru-android-landscape .ebru-app-toolbar {
+    top: 8px; bottom: auto; left: 50%; right: auto; transform: translateX(-50%);
+    width: min(340px, calc(100vw - 280px)); min-width: 240px;
+    grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; padding: 4px;
+    border-radius: 15px; background: var(--android-chrome); box-shadow: 0 4px 20px #0002;
+}
+.ebru-android-landscape .ebru-app-toolbar button { display: flex; align-items: center; justify-content: center; flex-direction: row; gap: 6px; min-height: 38px; padding: 5px; border-radius: 10px; background: transparent; font-size: 10px; font-weight: 550; white-space: nowrap; }
+.ebru-android-landscape .ebru-app-toolbar button[data-mobile-key="save"] { background: #ece7dd; color: #171717; }
+.ebru-android-landscape .ebru-app-toolbar button[aria-pressed="true"] { background: #6e292d; color: #ffd3d4; }
+.android-action-icon { display: flex; flex: none; }
+.android-action-label { overflow: hidden; text-overflow: ellipsis; }
+.android-settings-toggle { position: fixed; top: 8px; right: 8px; z-index: 1201; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 13px; border: 1px solid var(--android-border); background: var(--android-chrome); color: #eee; }
+.android-settings-toggle[aria-expanded="true"] { background: #ece7dd; color: #171717; }
+.android-settings { position: fixed; z-index: 1800; right: 8px; top: 60px; bottom: 78px; width: 262px; max-width: calc(100vw - 32px); padding: 12px 16px; box-sizing: border-box; overflow: auto; overscroll-behavior: contain; border: 1px solid var(--android-border); border-radius: 16px; background: rgba(18,19,21,.97); color: #eee; box-shadow: 0 12px 40px #0004; font: 13px/1.5 var(--ebru-ui-font); }
+.android-settings[hidden] { display: none; }
+.android-settings header { display: flex; align-items: center; justify-content: space-between; position: sticky; top: -12px; background: #131416; padding: 4px 0; z-index: 1; }
+.android-settings h2 { margin: 0; font-size: 17px; font-weight: 600; }
+.android-settings header button { width: 36px; height: 36px; padding: 8px; background: transparent; color: #ddd; border: 0; }
+.android-settings label { display: block; margin: 12px 0; }
+.android-settings label > div { display: flex; align-items: center; justify-content: space-between; }
+.android-settings output { font-variant-numeric: tabular-nums; color: #aaa; font-size: 11px; }
+.android-settings input[type="range"] { display: block; width: 100%; min-height: 36px; margin: 2px 0 0; accent-color: #ece7dd; touch-action: pan-x; }
+.android-settings select { display: block; width: 100%; min-height: 40px; margin-top: 6px; border: 1px solid #48494b; border-radius: 8px; color: #eee; background: #262729; padding: 4px 8px; font-size: 14px; }
+.android-settings .android-pause { display: flex; align-items: center; justify-content: space-between; min-height: 36px; }
+.android-pause input { width: 22px; height: 22px; accent-color: #ece7dd; }
+.android-new-canvas, .android-about-link { width: 100%; min-height: 42px; color: #eee; border: 1px solid #454649; border-radius: 9px; background: #242528; font: 500 12px var(--ebru-ui-font); margin-top: 6px; }
+.android-about-link { background: transparent; color: #aaa; border: 0; }
+.ebru-android-landscape body .ebru-color-palette { left: 50%; bottom: 8px; top: auto; transform: translateX(-50%); width: min(720px, calc(100vw - 136px)); max-width: none; padding: 8px; border-radius: 17px; background: var(--android-chrome); border-color: var(--android-border); }
+.ebru-android-landscape .ebru-palette-toggle { display: none; }
+.ebru-android-landscape .ebru-color-palette .ebru-palette-row { display: flex !important; flex-direction: row; align-items: center; gap: 8px; }
+.ebru-android-landscape .ebru-palette-swatches { display: flex; flex: 1; justify-content: flex-start; align-items: center; gap: 8px; min-width: 0; padding: 3px; margin: 0; max-height: none; overflow-x: auto; overflow-y: hidden; touch-action: pan-x; scrollbar-width: none; }
+.ebru-android-landscape .ebru-palette-swatches::-webkit-scrollbar { display: none; }
+.ebru-android-landscape .ebru-color-swatch { width: 34px; height: 34px; flex: 0 0 34px; border-width: 1px; border-color: #ffffff45; }
+.ebru-android-landscape .ebru-color-swatch.selected { outline: 2px solid white; outline-offset: 2px; border: 3px solid #171717; }
+.ebru-android-landscape .ebru-custom-color-picker { flex: 0 0 40px; height: 40px; margin: 0; }
+.ebru-android-landscape .ebru-custom-color-label { border: 1px solid #ffffff30; border-radius: 50%; font-size: 0; gap: 0; background: conic-gradient(#d96e69,#e1b760,#6ba897,#7199b7,#9f79a6,#d96e69); }
+.ebru-android-landscape .ebru-custom-color-label svg { width: 19px; height: 19px; color: white; filter: drop-shadow(0 1px 2px #000); }
+.android-palette-edit { flex: 0 0 40px; width: 40px; height: 40px; border: 0; border-radius: 11px; color: #ddd; background: #ffffff0b; display: grid; place-items: center; }
+.ebru-android-landscape .ebru-palette-actions { display: none; }
+.ebru-android-landscape .android-editing-colors .ebru-palette-actions { display: flex; position: absolute; bottom: calc(100% + 8px); right: 0; padding: 10px; min-width: 230px; gap: 8px; border: 1px solid var(--android-border); border-radius: 12px; background: #151618; box-shadow: 0 6px 24px #0003; }
+.ebru-android-landscape .ebru-palette-actions button { min-height: 44px; border-color: #ffffff2b; border-radius: 8px; font-size: 12px; }
+.ebru-android-landscape .ebru-palette-notice { position: absolute; bottom: calc(100% + 6px); left: 0; background: #171717; padding: 8px; border-radius: 8px; }
+.ebru-android-landscape body .ebru-input-controls { right: 10px; bottom: 14px; max-width: 44px; }
+.ebru-android-landscape .ebru-ui-toggle { width: 44px; height: 44px; border-radius: 12px; background: var(--android-chrome); }
+.ebru-android-landscape .ebru-app-dialog { width: min(780px, calc(100vw - 32px)); max-height: calc(100dvh - 24px); margin: auto; padding: 12px 16px 16px; border-radius: 18px; background: #131416; border-color: #ffffff20; font-size: 13px; }
+.ebru-android-landscape .ebru-app-dialog::backdrop { background: #0007; backdrop-filter: blur(3px); }
+.ebru-android-landscape .ebru-app-dialog header { top: -12px; padding: 0 0 10px; background: #131416; gap: 16px; }
+.ebru-android-landscape .ebru-app-dialog h2 { font-size: 19px; font-weight: 600; letter-spacing: -.02em; }
+.ebru-android-landscape .ebru-app-dialog button { min-height: 42px; border-radius: 10px; padding: 8px 12px; font-size: 12px; }
+.ebru-android-landscape .android-video-dialog { overflow: hidden; }
+.android-video-layout { display: grid; grid-template-columns: minmax(0,1fr) 180px; gap: 18px; align-items: center; }
+.android-video-surface { display: flex; align-items: center; justify-content: center; min-width: 0; background: #090a0b; border-radius: 12px; overflow: hidden; }
+.ebru-android-landscape .ebru-app-dialog .android-video-surface video { display: block; width: 100%; height: min(52dvh, 300px); max-height: calc(100dvh - 110px); object-fit: contain; }
+.android-video-actions { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
+.android-video-actions p { font-size: 11px; line-height: 1.55; color: #96989c; margin: 0 0 4px; }
+.android-video-actions button:first-of-type { background: #ece7dd; color: #171717; }
+.ebru-android-landscape .ebru-gallery-hint { margin: 0 0 10px; font-size: 11px; }
+.ebru-android-landscape .ebru-gallery-grid { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.ebru-android-landscape .ebru-gallery-grid img { height: 145px; object-fit: contain; }
+.ebru-android-landscape .ebru-gallery-grid article > p { margin: 5px 0; font-size: 10px; }
+.ebru-android-landscape .ebru-gallery-empty { padding: 24px 12px; }
+.ebru-android-landscape .ebru-app-toast { bottom: 80px; padding: 9px 14px; font-size: 12px; }
+.ebru-android-landscape .ebru-info-overlay { padding: 12px 20px; }
+.ebru-android-landscape .ebru-info-card { width: min(680px, 100%); padding: 16px 20px; max-height: calc(100dvh - 24px); }
+.ebru-android-landscape .ebru-info-card::before { display: none; }
+.ebru-android-landscape .ebru-info-title { font-size: 25px; margin: 0 0 8px; }
+.ebru-android-landscape .ebru-info-lead { font-size: 10px; margin-bottom: 10px; }
+.ebru-android-landscape .ebru-info-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.ebru-android-landscape .ebru-info-step { padding: 10px 12px; }
+.ebru-android-landscape .ebru-info-step strong { font-size: 13px; }
+.ebru-android-landscape .ebru-info-step p { font-size: 11px; }
+.ebru-android-landscape body.ebru-ui-hidden .android-settings-toggle,
+.ebru-android-landscape body.ebru-ui-hidden .android-settings { display: none; }
+@media (max-width: 700px) {
+    .ebru-android-landscape .ebru-app-toolbar { width: calc(100vw - 230px); min-width: 220px; }
+    .ebru-android-landscape .ebru-app-toolbar button { flex-direction: column; gap: 2px; padding: 2px 3px; min-height: 38px; font-size: 9px; }
+    .android-action-icon svg { width: 17px; height: 17px; }
+    .ebru-android-landscape body .ebru-color-palette { width: calc(100vw - 96px); left: 8px; transform: none; }
+    .ebru-android-landscape .ebru-color-swatch { width: 32px; height: 32px; flex-basis: 32px; }
+    .android-video-layout { grid-template-columns: minmax(0,1fr) 156px; gap: 12px; }
+}
+@media (min-width: 900px) and (min-height: 550px) {
+    .ebru-android-landscape .ebru-app-toolbar { width: 380px; }
+    .ebru-android-landscape .ebru-app-toolbar button { min-height: 44px; font-size: 12px; }
+    .ebru-android-landscape .android-settings { width: 300px; }
+    .ebru-android-landscape .ebru-color-swatch { width: 40px; height: 40px; flex-basis: 40px; }
+}
