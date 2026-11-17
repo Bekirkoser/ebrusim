@@ -1,0 +1,57 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'art.ebrusim.app'
+    buildFeatures { buildConfig true }
+    compileSdk 36
+    defaultConfig {
+        applicationId 'art.ebrusim.app'
+        minSdk 26
+        targetSdk 36
+        versionCode 6
+        versionName '1.3.2'
+    }
+    // CI chooses an explicit cached debug key; local Android Studio keeps its normal key.
+    def previewStore = System.getenv('EBRUSIM_PREVIEW_KEYSTORE')
+    if (previewStore) {
+        signingConfigs.debug.storeFile = file(previewStore)
+    }
+    def signingFile = rootProject.file('keystore.properties')
+    if (signingFile.exists()) {
+        def properties = new Properties()
+        signingFile.withInputStream { properties.load(it) }
+        signingConfigs {
+            release {
+                storeFile rootProject.file(properties['storeFile'])
+                storePassword properties['storePassword']
+                keyAlias properties['keyAlias']
+                keyPassword properties['keyPassword']
+            }
+        }
+    }
+    buildTypes {
+        debug {
+            // Install beside the original test app so saved artworks remain safe.
+            applicationIdSuffix '.preview131'
+            resValue 'string', 'app_name', 'Ebrusim Preview'
+        }
+        release {
+            minifyEnabled false
+            if (signingFile.exists()) signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+// Always package current source, including when building directly in Android Studio.
+tasks.register('prepareWebAssets', Exec) {
+    workingDir rootProject.projectDir.parentFile
+    commandLine 'node', 'scripts/build-android.cjs'
+    inputs.files(fileTree(rootProject.projectDir.parentFile) {
+        include '*.js', '*.html', '*.css', '*.ttf', 'LDR_LLL1_0.png', 'mobile/**', 'android-ui/**', 'scripts/build-android.cjs'
+    })
+    outputs.dir('src/main/assets/www')
+}
+tasks.named('preBuild').configure { dependsOn 'prepareWebAssets' }

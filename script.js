@@ -59,7 +59,7 @@ resizeCanvas();
 let config = {
     SIM_RESOLUTION: 128,
     DYE_RESOLUTION: 1024,
-    CAPTURE_RESOLUTION: 512,
+    CAPTURE_RESOLUTION: window.EbruNative ? 1080 : 512,
     // Ebru paint remains on the surface; disable time-based color fading.
     DENSITY_DISSIPATION: 0.0,
     VELOCITY_DISSIPATION: 0.2,
@@ -133,6 +133,7 @@ const { gl, ext } = getWebGLContext(canvas);
 
 if (isMobile()) {
     config.DYE_RESOLUTION = 512;
+    if (window.EbruNative) config.PRESSURE_ITERATIONS = 12;
 }
 if (!ext.supportLinearFiltering) {
     config.DYE_RESOLUTION = 512;
@@ -151,6 +152,8 @@ function getWebGLContext (canvas) {
     if (!isWebGL2)
         gl = canvas.getContext('webgl', params) || canvas.getContext('experimental-webgl', params);
 
+    if (!gl) throw new Error('WebGL is unavailable');
+
     let halfFloat;
     let supportLinearFiltering;
     if (isWebGL2) {
@@ -163,6 +166,7 @@ function getWebGLContext (canvas) {
 
     gl.clearColor(0.0, 0.0, 0.0, 0.0);
 
+    if (!isWebGL2 && !halfFloat) throw new Error('Half-float textures unavailable');
     const halfFloatTexType = isWebGL2 ? gl.HALF_FLOAT : halfFloat.HALF_FLOAT_OES;
     let formatRGBA;
     let formatRG;
@@ -181,6 +185,7 @@ function getWebGLContext (canvas) {
         formatR = getSupportedFormat(gl, gl.RGBA, gl.RGBA, halfFloatTexType);
     }
 
+    if (!formatRGBA || !formatRG || !formatR) throw new Error('Floating-point framebuffer unavailable');
     return {
         gl,
         ext: {
@@ -228,6 +233,8 @@ function supportRenderTextureFormat (gl, internalFormat, format, type) {
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
 
     let status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+    gl.deleteTexture(texture);
+    gl.deleteFramebuffer(fbo);
     return status == gl.FRAMEBUFFER_COMPLETE;
 }
 
@@ -247,7 +254,9 @@ function startGUI () {
     labelControl(gui.add(config, 'DROP_SIZE', 25, 200).step(5), 'dropSize');
     labelControl(gui.add(config, 'SHADING'), 'shading').onFinishChange(updateKeywords);
     labelControl(gui.add(config, 'PAUSED'), 'paused').listen();
-    labelControl(gui.add({ fun: clearPaint }, 'fun'), 'clear');
+    labelControl(gui.add({ fun: () => {
+        if (!window.EbruMobile || confirm(EbruMobile.t('clearConfirm'))) clearPaint();
+    } }, 'fun'), 'clear');
 
     let captureFolder = gui.addFolder('Capture');
     labelControl(captureFolder.addColor(config, 'BACK_COLOR'), 'background');
@@ -332,19 +341,31 @@ function isMobile () {
     return window.EbruDevice.touch;
 }
 
+function captureArtwork () {
+    // RGBA8 readback also works on mobile GPUs without float readPixels support.
+    const res = getResolution(config.CAPTURE_RESOLUTION);
+    const target = createFBO(res.width, res.height, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, gl.NEAREST);
+    try {
+        render(target);
+        const pixels = new Uint8Array(target.width * target.height * 4);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, target.fbo);
+        gl.readPixels(0, 0, target.width, target.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+        const flipped = new Uint8Array(pixels.length);
+        const row = target.width * 4;
+        for (let y = 0; y < target.height; y++)
+            flipped.set(pixels.subarray(y * row, (y + 1) * row), (target.height - 1 - y) * row);
+        return textureToCanvas(flipped, target.width, target.height).toDataURL('image/png');
+    } finally {
+        gl.deleteTexture(target.texture);
+        gl.deleteFramebuffer(target.fbo);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    }
+}
+
 function captureScreenshot () {
-    let res = getResolution(config.CAPTURE_RESOLUTION);
-    let target = createFBO(res.width, res.height, ext.formatRGBA.internalFormat, ext.formatRGBA.format, ext.halfFloatTexType, gl.NEAREST);
-    render(target);
-
-    let texture = framebufferToTexture(target);
-    texture = normalizeTexture(texture, target.width, target.height);
-
-    let captureCanvas = textureToCanvas(texture, target.width, target.height);
-    let datauri = captureCanvas.toDataURL();
-    downloadURI('fluid.png', datauri);
+    if (window.EbruMobile) { void EbruMobile.save().catch(() => EbruMobile.notify(EbruMobile.t('failed'))); return; }
+    downloadURI('fluid.png', captureArtwork());
     window.ebruAnalytics?.track('image_save');
-    URL.revokeObjectURL(datauri);
 }
 
 function framebufferToTexture (target) {
@@ -1103,12 +1124,14 @@ function initFramebuffers () {
     else
         velocity = resizeDoubleFBO(velocity, simRes.width, simRes.height, rg.internalFormat, rg.format, texType, filtering);
 
+    [divergence, curl, pressure?.read, pressure?.write].forEach(disposeFBO);
     divergence = createFBO      (simRes.width, simRes.height, r.internalFormat, r.format, texType, gl.NEAREST);
     curl       = createFBO      (simRes.width, simRes.height, r.internalFormat, r.format, texType, gl.NEAREST);
     pressure   = createDoubleFBO(simRes.width, simRes.height, r.internalFormat, r.format, texType, gl.NEAREST);
 
-    initBloomFramebuffers();
-    initSunraysFramebuffers();
+    // Bloom and sunrays are disabled in this studio; avoid unused GPU buffers.
+    if (config.BLOOM) initBloomFramebuffers();
+    if (config.SUNRAYS) initSunraysFramebuffers();
 }
 
 function initDyeMassFramebuffers () {
@@ -1197,6 +1220,12 @@ function initSunraysFramebuffers () {
     sunraysTemp = createFBO(res.width, res.height, r.internalFormat, r.format, texType, filtering);
 }
 
+function disposeFBO (target) {
+    if (!target) return;
+    gl.deleteTexture(target.texture);
+    gl.deleteFramebuffer(target.fbo);
+}
+
 function createFBO (w, h, internalFormat, format, type, param) {
     gl.activeTexture(gl.TEXTURE0);
     let texture = gl.createTexture();
@@ -1265,6 +1294,7 @@ function resizeFBO (target, w, h, internalFormat, format, type, param) {
     copyProgram.bind();
     gl.uniform1i(copyProgram.uniforms.uTexture, target.attach(0));
     blit(newFBO);
+    disposeFBO(target);
     return newFBO;
 }
 
@@ -1272,6 +1302,7 @@ function resizeDoubleFBO (target, w, h, internalFormat, format, type, param) {
     if (target.width == w && target.height == h)
         return target;
     target.read = resizeFBO(target.read, w, h, internalFormat, format, type, param);
+    disposeFBO(target.write);
     target.write = createFBO(w, h, internalFormat, format, type, param);
     target.width = w;
     target.height = h;
@@ -1324,19 +1355,39 @@ multipleSplats(parseInt(Math.random() * 20) + 5);
 
 let lastUpdateTime = Date.now();
 let colorUpdateTimer = 0.0;
+let frameRequest = 0;
+let appActive = true;
+let modalOpen = false;
+function syncAnimation() {
+    cancelAnimationFrame(frameRequest);
+    if (!document.hidden && appActive && !gl.isContextLost()) {
+        lastUpdateTime = Date.now();
+        frameRequest = requestAnimationFrame(update);
+    }
+}
+document.addEventListener('visibilitychange', syncAnimation);
+window.addEventListener('ebru-app-active', event => { appActive = event.detail; syncAnimation(); });
+window.addEventListener('ebru-modal', event => { modalOpen = event.detail; });
+canvas.addEventListener('webglcontextlost', event => { event.preventDefault(); cancelAnimationFrame(frameRequest); videoRecorder.dispose(); });
+canvas.addEventListener('webglcontextrestored', () => {
+    if (confirm(window.EbruI18n.language === 'tr'
+        ? 'Grafik belleği sıfırlandı. Kayıtlı görüntülerin korunur. Tuval yeniden açılsın mı?'
+        : 'Graphics memory was reset. Saved images are safe. Reload the canvas?')) location.reload();
+});
 update();
 
 function update () {
+    if (document.hidden || !appActive || gl.isContextLost()) return;
     const dt = calcDeltaTime();
     if (resizeCanvas())
         initFramebuffers();
     updateColors(dt);
     applyInputs();
-    if (!config.PAUSED)
+    if (!config.PAUSED && !modalOpen)
         step(dt);
     render(null);
     videoRecorder.captureFrame();
-    requestAnimationFrame(update);
+    frameRequest = requestAnimationFrame(update);
 }
 
 function calcDeltaTime () {
@@ -1787,7 +1838,7 @@ function getTextureScale (texture, width, height) {
 }
 
 function scaleByPixelRatio (input) {
-    let pixelRatio = Math.min(window.devicePixelRatio || 1, isMobile() ? 2 : 3);
+    let pixelRatio = Math.min(window.devicePixelRatio || 1, isMobile() ? (window.EbruNative ? 1.5 : 2) : 3);
     return Math.floor(input * pixelRatio);
 }
 
@@ -2553,6 +2604,7 @@ function hashCode (s) {
     }
 
     async function startCamera() {
+        if (window.EbruNative) return;
         if (camStarted) return;
         const session = ++cameraSession;
         camStarted = true;
@@ -2629,3 +2681,14 @@ function hashCode (s) {
     });
 
 })();
+
+// Public interface for the installed Android studio.
+window.EbruStudio = { capture: captureArtwork, recorder: videoRecorder, clear: clearPaint,
+    license: `MIT License
+Copyright (c) 2017 Pavel Dobryakov
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.` };

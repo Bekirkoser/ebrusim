@@ -1,0 +1,41 @@
+/* Installed app controls retain Ebrusim's translucent black visual language. */
+.ebru-app { --app-top: 0px; --app-bottom: 0px; --app-left: 0px; --app-right: 0px; }
+.ebru-app body { padding: var(--app-top) var(--app-right) var(--app-bottom) var(--app-left); box-sizing: border-box; }
+.ebru-app body > canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ebru-app .ebru-camera-button, .ebru-app .ebru-camera-status, .ebru-app .ebru-mouse-indicator { display: none !important; }
+.ebru-app .ebru-info-button { top: calc(12px + var(--app-top)); left: calc(12px + var(--app-left)); }
+.ebru-app .ebru-language { top: calc(12px + var(--app-top)); left: calc(68px + var(--app-left)); }
+.ebru-app .dg.ac { top: calc(76px + var(--app-top)); right: var(--app-right); }
+.ebru-app .dg.main > ul { max-height: max(100px, calc(100dvh - var(--app-top) - var(--app-bottom) - 360px)); }
+.ebru-app .dg .cr.function, .ebru-app .dg li.title { min-height: 44px; line-height: 44px; }
+.ebru-app .dg .c .slider { touch-action: pan-x; }
+.ebru-app .ebru-info-overlay { padding-top: calc(74px + var(--app-top)); padding-bottom: calc(16px + var(--app-bottom)); }
+.ebru-app body .ebru-color-palette { bottom: calc(78px + var(--app-bottom)); left: calc(12px + var(--app-left)); width: min(360px, calc(100vw - var(--app-left) - var(--app-right) - 78px)); }
+.ebru-app body .ebru-input-controls { bottom: calc(84px + var(--app-bottom)); right: calc(12px + var(--app-right)); }
+.ebru-app-toolbar { position: fixed; bottom: calc(10px + var(--app-bottom)); left: calc(12px + var(--app-left)); right: calc(12px + var(--app-right)); z-index: 1200; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 5px; border: 1px solid var(--ebru-line); border-radius: 16px; background: var(--ebru-surface); font-family: var(--ebru-ui-font); box-shadow: 0 6px 24px #0003; }
+.ebru-app-toolbar button, .ebru-app-dialog button, .ebru-graphics-error button { min-width: 0; min-height: 48px; border: 0; border-radius: 10px; padding: 8px; font: 600 13px var(--ebru-ui-font); color: #eee; background: var(--ebru-control); touch-action: manipulation; }
+.ebru-app-toolbar button[data-mobile-key="save"] { background: #e4ddd0; color: #171717; }
+.ebru-app-toolbar button:disabled { opacity: .45; }
+.ebru-app-toolbar button[aria-pressed="true"] { color: #ffb2a8; background: #63251e; }
+.ebru-app-about { position: fixed; right: calc(12px + var(--app-right)); top: calc(12px + var(--app-top)); max-width: 132px; min-height: 44px; border: 1px solid var(--ebru-line); border-radius: 12px; background: var(--ebru-surface); color: #ddd; padding: 8px 10px; font: 500 11px var(--ebru-ui-font); z-index: 1200; }
+.ebru-app-dialog { width: min(900px, calc(100vw - 24px - var(--app-left) - var(--app-right))); max-height: calc(100dvh - 40px - var(--app-top) - var(--app-bottom)); padding: 20px; box-sizing: border-box; border: 1px solid #444; border-radius: 20px; background: #101010; color: #eee; font: 15px/1.6 var(--ebru-ui-font); overscroll-behavior: contain; }
+.ebru-app-dialog::backdrop { background: #0009; }
+.ebru-app-dialog header { display: flex; align-items: center; justify-content: space-between; gap: 16px; position: sticky; top: -20px; background: #101010; padding: 8px 0; z-index: 1; }
+.ebru-app-dialog h2 { margin: 0; font-size: 23px; line-height: 1.2; }
+.ebru-app-dialog header button { flex: none; }
+.ebru-gallery-hint, .ebru-gallery-grid article > p { color: #aaa; font-size: 12px; }
+.ebru-gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 16px; }
+.ebru-gallery-grid article { border: 1px solid #333; border-radius: 12px; padding: 10px; min-width: 0; }
+.ebru-gallery-grid img { width: 100%; height: 220px; object-fit: contain; background: #252525; border-radius: 8px; }
+.ebru-gallery-actions { display: flex; flex-wrap: wrap; gap: 5px; }
+.ebru-gallery-actions button { flex: 1; min-width: 70px; font-size: 12px; }
+.ebru-gallery-empty { text-align: center; padding: 48px 12px; }
+.ebru-gallery-empty p { color: #aaa; }
+.ebru-app-dialog video { width: 100%; max-height: 55dvh; }
+.ebru-credits { white-space: pre-line; color: #aaa; font-size: 12px; }
+.ebru-app-dialog pre { white-space: pre-wrap; font-size: 11px; user-select: text; }
+.ebru-app-toast { position: fixed; bottom: calc(84px + var(--app-bottom)); left: 50%; transform: translateX(-50%); max-width: calc(100vw - 48px); z-index: 5000; border: 1px solid #555; border-radius: 12px; padding: 12px 18px; background: #171717; color: #fff; font: 14px/1.4 var(--ebru-ui-font); box-shadow: 0 5px 30px #0006; }
+.ebru-graphics-error { position: fixed; inset: 0; z-index: 6000; display: grid; place-content: center; padding: 32px; background: #171717; color: #eee; font: 16px/1.6 var(--ebru-ui-font); }
+.ebru-app body.ebru-ui-hidden .ebru-app-toolbar, .ebru-app body.ebru-ui-hidden .ebru-app-about { display: none; }
+@media (min-width: 800px) and (min-height: 600px) { .ebru-app-toolbar { width: 440px; left: 50%; right: auto; transform: translateX(-50%); } }
+@media (max-height: 480px) { .ebru-app .ebru-color-palette .ebru-palette-row { display: none; } .ebru-app .ebru-color-palette:focus-within .ebru-palette-row { display: flex; } .ebru-app .ebru-color-palette { bottom: calc(76px + var(--app-bottom)); } .ebru-app .ebru-palette-title { margin-bottom: 0; } .ebru-app .ebru-info-card { padding: 12px; } .ebru-app .ebru-info-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

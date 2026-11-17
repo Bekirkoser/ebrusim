@@ -1,0 +1,319 @@
+@font-face {
+    font-family: EbrusimInter;
+    src: url("./fonts/InterVariable.woff2") format("woff2");
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+}
+/* Android drawing studio. Palette sampled from the official Procreate dark UI
+   reference: toolbar #1d1c22, neutral controls, restrained blue selection. */
+.ebru-android-landscape {
+    --pc-bar: #1d1c22;
+    --pc-workspace: #2b2a2e;
+    --pc-panel: #29282f;
+    --pc-field: #37353f;
+    --pc-line: #424147;
+    --pc-text: #eeecf2;
+    --pc-muted: #aaa7b2;
+    --pc-blue: #79b6ff;
+    --ebru-ui-font: EbrusimInter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --ebru-paper: #2b2a2e;
+    --ebru-surface: #26252b;
+    --ebru-surface-compact: #26252b;
+    --ebru-surface-dialog: #26252b;
+    --ebru-ink: #c2c1c5;
+    --ebru-indigo: #c2c1c5;
+    background: var(--pc-workspace);
+    color-scheme: dark;
+}
+.ebru-android-landscape body { background: var(--pc-workspace); }
+.ebru-android-landscape body > canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    border: 0; border-radius: 0; background: #fff; box-shadow: none;
+}
+.ebru-android-landscape .dg.ac,
+.ebru-android-landscape .ebru-info-button,
+.ebru-android-landscape .ebru-app-about,
+.ebru-android-landscape body .ebru-input-controls { display: none !important; }
+.ebru-android-landscape .ebru-language { display: none; }
+.pc-toolbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1200;
+    height: 56px; padding: 0 14px; display: flex; align-items: center; justify-content: space-between;
+    box-sizing: border-box; background: rgb(29 28 34 / 64%); border-bottom: 1px solid #ffffff08;
+    color: var(--pc-text); font: 500 13px var(--ebru-ui-font);
+}
+.ebru-android-landscape .ebru-app-toolbar {
+    position: static; display: flex; align-items: center; flex: 0 1 auto;
+    width: auto; min-width: 0; max-width: none; height: 56px; margin: 0;
+    transform: none; gap: 4px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none;
+}
+.ebru-android-landscape .ebru-app-toolbar button,
+.pc-toolbar .pc-tool,
+.ebru-android-landscape .pc-toolbar .ebru-ui-toggle {
+    display: flex; align-items: center; justify-content: center; flex: 0 0 42px;
+    width: 42px; min-width: 42px; height: 42px; min-height: 42px; padding: 0;
+    border: 1px solid transparent; border-radius: 11px; background: transparent;
+    color: #eeecf2; box-shadow: none; font: 520 13px var(--ebru-ui-font); opacity: 1;
+    transition: background-color 140ms ease, color 140ms ease, transform 120ms ease;
+}
+.ebru-android-landscape .ebru-app-toolbar button:hover,
+.pc-toolbar .pc-tool:hover,
+.pc-toolbar .ebru-ui-toggle:hover { background: #ffffff08; }
+.ebru-android-landscape .ebru-app-toolbar button[data-mobile-key="save"] { background: transparent; color: var(--pc-text); }
+.ebru-android-landscape .ebru-app-toolbar button[data-mobile-key="gallery"] {
+    width: auto; min-width: 88px; flex: 0 0 auto; gap: 9px;
+    padding: 0 11px 0 5px; margin-right: 3px; justify-content: flex-start; color: #eeecf2;
+}
+.pc-action-icon { display: flex; }
+.pc-action-label { display: none; }
+[data-mobile-key="gallery"] .pc-action-icon { display: flex; }
+[data-mobile-key="gallery"] .pc-action-label { display: inline; }
+.pc-toolbar button[aria-expanded="true"],
+.ebru-android-landscape .ebru-app-toolbar button[aria-pressed="true"] {
+    color: #9ac8ff; background: #79b6ff16; border-color: #79b6ff18;
+}
+.pc-tools {
+    display: flex; align-items: center; height: 56px; gap: 5px;
+}
+.pc-color-button {
+    position: relative; display: grid; place-items: center; width: 44px; height: 44px;
+    padding: 0; margin: 0 0 0 6px; border: 1px solid #ffffff12; border-radius: 12px;
+    flex: 0 0 44px; background: #34313b; box-shadow: none;
+}
+.pc-color-button[aria-expanded="true"] {
+    outline: none; border-color: #79b6ff80; background: #79b6ff18;
+}
+.pc-sidebar {
+    position: fixed; left: 12px; top: calc(50% + 25px); transform: translateY(-50%);
+    z-index: 1100; width: 44px; height: min(248px, calc(100dvh - 102px));
+    display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 0;
+    box-sizing: border-box; border: 1px solid #ffffff08; border-radius: 14px;
+    background: rgb(29 28 34 / 72%); box-shadow: 0 3px 12px #0001;
+}
+.pc-rail-control {
+    min-height: 0; flex: 1; width: 36px; display: flex;
+    flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+}
+.pc-rail-control input[type="range"] {
+    writing-mode: vertical-lr; direction: rtl; appearance: none; -webkit-appearance: none;
+    width: 32px; height: 100%; min-height: 28px; margin: 0; border: 0; background: transparent;
+    outline: none; touch-action: none; cursor: ns-resize;
+}
+.pc-rail-control input::-webkit-slider-runnable-track {
+    width: 4px; border-radius: 4px;
+    background: linear-gradient(to top, #c9c5d2 var(--pc-fill,50%), #49464f var(--pc-fill,50%));
+}
+.pc-rail-control input::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 16px; height: 16px;
+    margin-left: -6px; background: #edeaf2; border: 2px solid #222127; border-radius: 50%;
+    box-shadow: 0 1px 3px #0005;
+}
+.pc-rail-control input:focus-visible { outline: 1px solid var(--pc-blue); outline-offset: 1px; }
+.pc-pause {
+    display: grid; place-items: center; flex: 0 0 30px; width: 32px; height: 30px;
+    border: 0; border-radius: 9px; background: #ffffff08; color: #c8c4cf;
+}
+.pc-pause svg { width: 16px; height: 16px; }
+.pc-pause[aria-pressed="true"] {
+    color: #9ac8ff; background: #79b6ff18;
+}
+.pc-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.pc-panel {
+    position: fixed; z-index: 1800; top: 64px; bottom: auto; width: 296px;
+    max-width: calc(100vw - 24px); max-height: calc(100dvh - 76px); overflow-y: auto;
+    padding: 0 16px 16px; box-sizing: border-box; border: 1px solid #ffffff10;
+    border-radius: 16px; background: var(--pc-panel); color: var(--pc-text);
+    box-shadow: 0 5px 10px #0002, 0 18px 44px #0004; font: 450 13px/1.5 var(--ebru-ui-font);
+    overscroll-behavior: contain; scrollbar-width: thin; animation: pc-panel-in 150ms ease-out;
+}
+.pc-panel[hidden] { display: none; }
+.pc-settings { left: 72px; }
+.pc-settings[data-mode="paint"], .pc-settings[data-mode="water"] { left: auto; right: 72px; }
+.pc-panel > header {
+    position: sticky; top: 0; display: flex; align-items: center; justify-content: space-between;
+    min-height: 54px; margin: 0 -16px 10px; padding: 0 16px;
+    background: var(--pc-panel); z-index: 1; border-bottom: 1px solid #ffffff09;
+}
+.pc-panel h2 {
+    font-size: 17px; font-weight: 640; margin: 0; letter-spacing: -.025em;
+}
+.pc-panel > header button {
+    width: 32px; height: 32px; border: 0; border-radius: 9px;
+    background: #ffffff06; color: #b6b1c1; display: grid; place-items: center; padding: 0;
+}
+.pc-panel > header button svg { width: 16px; height: 16px; }
+.pc-panel h3 {
+    margin: 18px 0 10px; color: #a8a2b4; font-size: 11px; font-weight: 600; letter-spacing: .015em;
+}
+.pc-setting-row {
+    display: block; margin: 10px 0; padding: 9px 12px 2px;
+    background: #ffffff04; border: 1px solid #ffffff05; border-radius: 11px;
+}
+.pc-setting-row > div { display: flex; align-items: center; justify-content: space-between; }
+.pc-setting-row output {
+    color: #c4becf; font: 500 11px var(--ebru-ui-font); font-variant-numeric: tabular-nums;
+    background: #ffffff07; border-radius: 5px; padding: 2px 5px;
+}
+.pc-setting-row input[type="range"] {
+    appearance: none; -webkit-appearance: none; display: block; width: 100%; height: 36px;
+    min-height: 36px; margin: 0; background: transparent; touch-action: pan-x;
+}
+.pc-inline-setting {
+    min-height: 48px; display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; border-bottom: 1px solid #ffffff07; font-weight: 450;
+}
+.pc-inline-setting input[type="color"] {
+    width: 36px; height: 30px; border: 1px solid #ffffff10;
+    border-radius: 8px; padding: 2px; background: transparent;
+}
+.pc-inline-setting select {
+    max-width: 148px; height: 36px; padding: 0 8px; border: 0; border-radius: 8px;
+    background: #ffffff06; color: #d1cbdc; font: 450 12px var(--ebru-ui-font);
+}
+.pc-text-action {
+    display: block; width: 100%; min-height: 44px; text-align: left; border: 0;
+    border-bottom: 1px solid #ffffff07; background: transparent; color: var(--pc-text);
+    font: 480 13px var(--ebru-ui-font); padding: 6px 0;
+}
+.pc-text-action.pc-destructive { color: #cf777a; }
+.ebru-android-landscape .pc-settings .ebru-language { display: flex; position: static; padding: 0; margin: 0; border: 0; border-radius: 4px; background: #35343a; box-shadow: none; }
+.ebru-android-landscape .pc-settings .ebru-language button { min-height: 30px; min-width: 34px; padding: 5px; font-size: 11px; border-radius: 3px; color: #aaa9ad; background: transparent; }
+.ebru-android-landscape .pc-settings .ebru-language button[aria-pressed="true"] { background: #55545a; color: #e2e1e5; }
+.ebru-android-landscape body .ebru-color-palette {
+    display: none; position: fixed; top: 64px; bottom: auto; left: auto; right: 12px;
+    width: 296px; max-width: calc(100vw - 24px); max-height: calc(100dvh - 76px);
+    transform: none; padding: 0 16px 16px; border: 1px solid #ffffff10; border-radius: 16px;
+    background: var(--pc-panel); color: var(--pc-text); box-shadow: 0 5px 10px #0002, 0 18px 44px #0004;
+}
+.ebru-android-landscape body.pc-colors-open .ebru-color-palette { display: block; }
+.ebru-android-landscape .ebru-palette-toggle { display: none; }
+.ebru-android-landscape .ebru-color-palette .ebru-palette-row { display: flex !important; flex-direction: column; gap: 10px; align-items: stretch; }
+.ebru-android-landscape .ebru-palette-swatches {
+    display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 7px;
+    padding: 3px; margin: 0; max-height: none; overflow: visible; touch-action: auto;
+}
+.ebru-android-landscape .ebru-color-swatch {
+    display: block; width: 100%; height: 36px; min-height: 36px; border: 0; border-radius: 7px;
+    box-shadow: inset 0 0 0 1px #ffffff0d; transition: transform 120ms ease;
+}
+.ebru-android-landscape .ebru-color-swatch.selected { border: 2px solid #fff; outline: 1px solid #0008; outline-offset: 1px; }
+.ebru-android-landscape .ebru-custom-color-picker { position: relative; display: block; height: 40px; margin: 2px 0 0; }
+.ebru-android-landscape .ebru-custom-color-label {
+    height: 42px; display: flex; align-items: center; justify-content: flex-start; gap: 10px;
+    padding: 0 12px; border: 1px solid #ffffff06; border-radius: 10px;
+    background: #ffffff07; color: var(--pc-text); font: 480 12px var(--ebru-ui-font);
+}
+.ebru-android-landscape .ebru-custom-color-label svg { width: 18px; height: 18px; color: var(--pc-muted); filter: none; }
+.ebru-android-landscape .ebru-palette-actions {
+    display: flex; gap: 8px; border: 0; padding-top: 2px;
+}
+.ebru-android-landscape .ebru-palette-actions button {
+    min-height: 40px; background: #ffffff05; color: #c9c3d4;
+    border: 1px solid #ffffff06; border-radius: 9px; padding: 6px;
+    font: 480 11px var(--ebru-ui-font);
+}
+.ebru-android-landscape .ebru-palette-notice { font-size: 11px; margin: 0; }
+.ebru-android-landscape .ebru-app-dialog {
+    width: min(780px,calc(100vw - 32px)); max-height: calc(100dvh - 24px); margin: auto;
+    padding: 0 18px 18px; border: 1px solid #ffffff10; border-radius: 18px;
+    background: var(--pc-panel); color: var(--pc-text); font-size: 13px;
+    box-shadow: 0 12px 48px #0005; animation: pc-panel-in 150ms ease-out;
+}
+.ebru-android-landscape .ebru-app-dialog::backdrop { background: #0006; backdrop-filter: none; }
+.ebru-android-landscape .ebru-app-dialog > header {
+    position: sticky; top: 0; display: flex; align-items: center; justify-content: space-between;
+    min-height: 54px; margin: 0 -18px 14px; padding: 0 18px;
+    border-bottom: 1px solid #ffffff09; background: var(--pc-panel);
+}
+.ebru-android-landscape .ebru-app-dialog h2 { font-size: 17px; font-weight: 600; letter-spacing: -.02em; }
+.ebru-android-landscape .ebru-app-dialog button {
+    min-height: 42px; padding: 9px 12px; border: 1px solid #ffffff07; border-radius: 10px;
+    background: #ffffff08; color: var(--pc-text); font: 500 12px var(--ebru-ui-font);
+}
+.ebru-android-landscape .ebru-app-dialog > header button { color: var(--pc-blue); background: transparent; padding-right: 0; }
+.pc-video-layout { display: grid; grid-template-columns: minmax(0,1fr) 164px; gap: 16px; align-items: center; }
+.pc-video-surface { display: flex; align-items: center; justify-content: center; min-width: 0; background: #16151a; border-radius: 3px; overflow: hidden; }
+.ebru-android-landscape .pc-video-surface video { display: block; width: 100%; height: min(52dvh,300px); max-height: calc(100dvh - 116px); object-fit: contain; }
+.pc-video-actions { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
+.pc-video-actions p { margin: 0 0 4px; color: var(--pc-muted); font-size: 11px; line-height: 1.5; }
+.pc-video-actions button:first-of-type { background: #3b3a41; color: #e0dfe3; }
+.ebru-android-landscape .ebru-gallery-grid { grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 14px; }
+.ebru-android-landscape .ebru-gallery-grid article {
+    background: #ffffff03; border: 1px solid #ffffff07; border-radius: 12px; padding: 10px;
+}
+.ebru-android-landscape .ebru-gallery-grid img {
+    height: 132px; object-fit: contain; background: #201f25; border-radius: 7px;
+}
+.ebru-android-landscape .ebru-gallery-grid article > p { margin: 4px 0 8px; font-size: 10px; color: var(--pc-muted); }
+.ebru-android-landscape .ebru-gallery-actions { gap: 4px; }
+.ebru-android-landscape .ebru-gallery-actions button { padding: 5px 7px; min-width: 0; font-size: 10px; }
+.ebru-android-landscape .ebru-gallery-empty { padding: 22px 12px; }
+.ebru-android-landscape .ebru-gallery-hint { margin: 0 0 12px; color: var(--pc-muted); font-size: 11px; }
+.ebru-android-landscape .ebru-app-toast { top: 52px; bottom: auto; border: 0; border-radius: 5px; padding: 9px 14px; background: var(--pc-panel); color: var(--pc-text); font-size: 12px; }
+.ebru-android-landscape .ebru-info-overlay { padding: 12px 20px; background: #0006; backdrop-filter: none; }
+.ebru-android-landscape .ebru-info-card { width: min(660px,100%); max-height: calc(100dvh - 24px); padding: 16px 20px; border: 1px solid #3b3a40; border-radius: 9px; background: var(--pc-panel); }
+.ebru-android-landscape .ebru-info-card::before { display: none; }
+.ebru-android-landscape .ebru-info-title { font-size: 23px; margin: 0 0 8px; }
+.ebru-android-landscape .ebru-info-lead { background: transparent; border: 0; padding: 0; margin-bottom: 10px; font-size: 11px; letter-spacing: 0; }
+.ebru-android-landscape .ebru-info-steps { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+.ebru-android-landscape .ebru-info-step { padding: 10px 12px; border: 0; border-radius: 3px; background: #323137; }
+.ebru-android-landscape .ebru-info-step strong { font-size: 13px; }
+.ebru-android-landscape .ebru-info-step p { font-size: 11px; }
+.ebru-android-landscape .ebru-info-close { background: transparent; border: 0; color: var(--pc-text); }
+.ebru-android-landscape body.ebru-ui-hidden .pc-toolbar,
+.ebru-android-landscape body.ebru-ui-hidden .pc-sidebar,
+.ebru-android-landscape body.ebru-ui-hidden .pc-panel { display: none !important; }
+.ebru-android-landscape button:focus-visible, .ebru-android-landscape select:focus-visible { outline: 2px solid var(--pc-blue); outline-offset: -2px; }
+@media (max-width:640px) {
+    .pc-toolbar { padding: 0 8px; height: 52px; }
+    .ebru-android-landscape .ebru-app-toolbar,.pc-tools { height: 52px; gap: 2px; }
+    .ebru-android-landscape .ebru-app-toolbar button,.pc-toolbar .pc-tool,.ebru-android-landscape .pc-toolbar .ebru-ui-toggle { flex-basis: 40px; width: 40px; min-width: 40px; height: 40px; min-height: 40px; }
+    .ebru-android-landscape .ebru-app-toolbar button[data-mobile-key="gallery"] { min-width: 82px; padding-left: 4px; padding-right: 8px; }
+    .pc-color-button { width: 40px; height: 40px; flex-basis: 40px; margin-left: 5px; }
+    .pc-sidebar { left: 10px; width: 42px; height: calc(100dvh - 92px); padding: 8px 0; gap: 6px; border-radius: 13px; }
+    .pc-rail-control { gap: 4px; }
+    .pc-rail-control input { min-height: 20px !important; }
+    .pc-video-layout { grid-template-columns: minmax(0,1fr) 144px; gap: 12px; }
+    .pc-settings { left: 66px; }
+    .pc-panel,.ebru-android-landscape body .ebru-color-palette { top: 60px; max-height: calc(100dvh - 72px); }
+}
+
+.pc-brand { display: flex; flex: 1; min-width: 0; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; font: 570 13px var(--ebru-ui-font); letter-spacing: -.035em; color: #e5e0ec; pointer-events: none; }
+.pc-brand img { width: 24px; height: 24px; object-fit: contain; flex: 0 0 24px; }
+@media (max-width:640px) {
+    .pc-brand { font-size: 12px; gap: 4px; }
+    .pc-brand img { width: 22px; height: 22px; flex-basis: 22px; }
+}
+@media (max-width:540px) {
+    .ebru-android-landscape .ebru-app-toolbar button[data-mobile-key="gallery"] { min-width: 40px; padding: 0; }
+    .ebru-android-landscape [data-mobile-key="gallery"] .pc-action-label { display: none; }
+}
+/* The eye controls only interface visibility; the canvas never changes size. */
+.ebru-android-landscape .ebru-ui-toggle.pc-restore {
+    position: fixed; top: auto; left: auto; right: 12px; bottom: 12px; z-index: 2000;
+    display: grid; place-items: center; width: 44px; height: 44px; padding: 0;
+    border: 1px solid #ffffff20; border-radius: 11px;
+    color: #eeecf2; background: rgb(29 28 34 / 64%); opacity: .8;
+}
+.ebru-android-landscape .ebru-ui-toggle.pc-restore:hover,
+.ebru-android-landscape .ebru-ui-toggle.pc-restore:focus-visible { opacity: 1; }
+.ebru-android-landscape .ebru-ui-toggle.pc-restore svg { width: 23px; height: 23px; }
+.pc-action-icon svg,.pc-tool svg,.pc-toolbar .ebru-ui-toggle svg { width: 23px; height: 23px; }
+[data-mobile-key="gallery"] .pc-action-icon svg { width: 18px; height: 18px; }
+.pc-color-button::after { content: ''; width: 28px; height: 28px; border-radius: 50%; background: var(--chosen-color,#c94b3c); border: 1px solid #ffffff25; }
+.pc-color-hex { margin-left: auto; margin-right: 12px; padding: 3px 5px; border-radius: 5px; background: #ffffff06; color: #bcb5c9; font: 500 10px var(--ebru-ui-font); font-variant-numeric: tabular-nums; }
+.pc-rail-readout { font: 520 9px var(--ebru-ui-font); font-variant-numeric: tabular-nums; color: #c0b9ce; line-height: 1; }
+.pc-setting-row input::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: linear-gradient(to right,var(--pc-blue) var(--pc-fill,50%),#4b4755 var(--pc-fill,50%)); }
+.pc-setting-row input::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 14px; height: 14px; margin-top: -5px; border: 2px solid #eae5f2; border-radius: 50%; background: #eae5f2; box-shadow: 0 1px 2px #0004; }
+.pc-inline-setting input[type="color"]::-webkit-color-swatch-wrapper { padding: 1px; }
+.pc-inline-setting input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 5px; }
+.ebru-android-landscape .ebru-app-toolbar button:active,.pc-tools button:active { transform: scale(.93); }
+.ebru-android-landscape .ebru-app-toolbar button:disabled { opacity: .35; }
+.ebru-android-landscape .ebru-gallery-grid article > p { font: 450 10px var(--ebru-ui-font); color: #b3adbf; margin-top: 8px; }
+.ebru-android-landscape .ebru-app-dialog h2 { font: 640 18px var(--ebru-ui-font); letter-spacing: -.03em; }
+.ebru-android-landscape .pc-video-actions button:first-of-type { background: #79b6ff1a; color: #c6dfff; border-color: #79b6ff22; }
+.ebru-android-landscape .pc-video-surface { border-radius: 10px; }
+.ebru-android-landscape .pc-video-actions p { font-family: var(--ebru-ui-font); color: #b2aabe; }
+@keyframes pc-panel-in { from { opacity: 0; transform: translateY(5px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (prefers-reduced-motion:reduce) { .pc-panel,.ebru-android-landscape .ebru-app-dialog { animation: none; } .pc-toolbar button { transition: none; } }

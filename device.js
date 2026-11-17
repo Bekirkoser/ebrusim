@@ -7,7 +7,7 @@ window.EbruDevice = (() => {
     const mobileAgent = /Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent)
         || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const device = {
-        get touch() { return coarse.matches || mobileAgent; },
+        get touch() { return !!window.EbruNative || coarse.matches || mobileAgent; },
         get compact() { return compact.matches; }
     };
     function refresh() {

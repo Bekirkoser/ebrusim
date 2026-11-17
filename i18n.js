@@ -111,13 +111,17 @@ window.EbruI18n = (() => {
         }
     };
     const storageKey = 'ebru-language';
-    let language = 'en';
+    let language = window.EbruNative && (navigator.language || '').startsWith('tr') ? 'tr' : 'en';
     try {
         const saved = localStorage.getItem(storageKey);
         if (saved === 'en' || saved === 'tr') language = saved;
     } catch { /* Language selection still works when storage is unavailable. */ }
 
-    const t = key => (window.EbruDevice.touch && touchMessages[language][key]) || messages[language][key] || messages.en[key] || key;
+    const nativeMessages = {
+        en: { pageTitle: 'Ebrusim', description: 'An offline digital marbling studio.', videoStop: 'Stop recording', videoRecording: 'Recording · up to 45 seconds', videoReady: 'Silent video · up to 45 seconds · 720p' },
+        tr: { pageTitle: 'Ebrusim', description: 'Çevrimdışı dijital ebru atölyesi.', videoStop: 'Kaydı durdur', videoRecording: 'Kaydediliyor · en çok 45 saniye', videoReady: 'Sessiz video · en çok 45 saniye · 720p' }
+    };
+    const t = key => (window.EbruNative && nativeMessages[language][key]) || (window.EbruDevice.touch && touchMessages[language][key]) || messages[language][key] || messages.en[key] || key;
     function apply(root = document) {
         const targets = [
             ['data-i18n', null], ['data-i18n-aria', 'aria-label'],

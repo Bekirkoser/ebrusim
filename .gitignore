@@ -1,0 +1,12 @@
+node_modules/
+package-lock.json
+dist/
+android/.gradle/
+android/local.properties
+android/**/build/
+android/app/src/main/assets/www/
+*.jks
+*.keystore
+keystore.properties
+.idea/
+.DS_Store
