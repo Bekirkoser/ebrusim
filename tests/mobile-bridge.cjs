@@ -1,13 +1,14 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-function load(native = true) {
+function load(native = true, ios = false) {
     const sent = [], timers = new Map(); let serial = 0;
     const context = {
         document: { documentElement: { classList: { add() {} } } },
         setTimeout(fn) { timers.set(++serial, fn); return serial; },
         clearTimeout(id) { timers.delete(id); },
-        EbruAndroid: native ? { postMessage(raw) { sent.push(JSON.parse(raw)); } } : undefined
+        webkit: ios ? { messageHandlers: { ebru: { postMessage(raw) { sent.push(JSON.parse(raw)); } } } } : undefined,
+        EbruAndroid: native && !ios ? { postMessage(raw) { sent.push(JSON.parse(raw)); } } : undefined
     };
     context.window = context; vm.createContext(context);
     vm.runInContext(fs.readFileSync('mobile/native-bridge.js', 'utf8'), context);
@@ -32,5 +33,12 @@ function load(native = true) {
     await assert.rejects(timeout, /timed out/);
     bridge.receive({ id: 'unknown', result: {} });
     await assert.rejects(load(false).bridge.request('shareFile'), /unavailable/);
-    console.log('PASS: concurrent Android responses, cancellation, native errors, timeouts and preview fallback.');
+    const apple = load(true, true);
+    assert.equal(apple.bridge.platform, 'ios');
+    const task = apple.bridge.request('galleryList', { id: 'forged', action: 'other' });
+    assert.equal(apple.sent[0].action, 'galleryList');
+    assert.notEqual(apple.sent[0].id, 'forged');
+    apple.bridge.receive({ id: apple.sent[0].id, result: [] });
+    assert.equal((await task).length, 0);
+    console.log('PASS: Android/iOS routing, concurrent responses, protected IDs, cancellation, errors, timeouts and preview fallback.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

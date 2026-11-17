@@ -2,6 +2,24 @@
 // Images are stored as blobs, not oversized localStorage strings. Transactions
 // resolve only after commit so disk-full failures are reported without data loss.
 window.EbruGallery = (() => {
+    if (window.EbruNative?.platform === 'ios') {
+        const encode = blob => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(blob);
+        });
+        const decode = item => {
+            const raw = atob(item.data.split(',')[1]);
+            const bytes = Uint8Array.from(raw, ch => ch.charCodeAt(0));
+            return { id: item.id, createdAt: item.createdAt, blob: new Blob([bytes], { type: 'image/png' }) };
+        };
+        return {
+            async save(blob) { return decode(await EbruNative.request('gallerySave', { data: await encode(blob) })); },
+            async list() { return (await EbruNative.request('galleryList')).map(decode); },
+            remove(id) { return EbruNative.request('galleryDelete', { artworkId: id }); }
+        };
+    }
     let opening;
     function open() {
         if (opening) return opening;

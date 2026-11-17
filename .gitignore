@@ -10,3 +10,8 @@ android/app/src/main/assets/www/
 keystore.properties
 .idea/
 .DS_Store
+ios/Ebrusim/www/
+ios/build/
+ios/DerivedData/
+*.xcuserstate
+xcuserdata/
