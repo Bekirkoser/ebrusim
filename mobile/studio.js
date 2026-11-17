@@ -36,7 +36,12 @@ window.EbruMobile = (() => {
             shareReady: 'Video ready', shareVideo: 'Share video', discard: 'Close video', videoHint: 'Share or save to device; videos are not automatically added to the gallery.'
         }
     };
-    const t = key => messages[window.EbruI18n?.language || 'en'][key] || key;
+    const t = key => {
+        const lang = window.EbruI18n?.language || 'en';
+        if (key === 'graphicsError' && window.EbruNative?.platform === 'ios')
+            return lang === 'tr' ? 'Grafik motoru başlatılamadı. Uygulamayı yeniden açıp tekrar dene.' : 'Could not start the graphics engine. Reopen the app and try again.';
+        return messages[lang][key] || key;
+    };
     let toolbar, dialog, toast, toastTimer, busy = false, galleryUrls = [], videoBlob;
     function notify(text) {
         if (!toast) return;
@@ -68,7 +73,8 @@ window.EbruMobile = (() => {
         finally {
             busy = false;
             toolbar?.removeAttribute('aria-busy');
-            toolbar?.querySelectorAll('button').forEach(el => { el.disabled = false; });
+            toolbar?.querySelectorAll('button').forEach(el => { el.disabled = !window.EbruStudio && el.dataset.mobileKey !== 'gallery'; });
+            window.EbruStudio?.recorder.onStateChange();
         }
     }
     function dataUrl(blob) {

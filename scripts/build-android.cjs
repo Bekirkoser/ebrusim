@@ -2,7 +2,9 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
-const output = path.join(root, 'android/app/src/main/assets/www');
+const platform = process.argv[2] || 'android';
+if (!['android', 'ios'].includes(platform)) throw Error('Unknown platform');
+const output = path.join(root, platform === 'ios' ? 'ios/Ebrusim/www' : 'android/app/src/main/assets/www');
 fs.rmSync(output, { recursive: true, force: true });
 fs.mkdirSync(output, { recursive: true });
 const assets = ['device.js', 'dat.gui.min.js', 'i18n.js', 'touch-input.js', 'point-cursor.js',
@@ -18,6 +20,7 @@ html = html.replace('<script src="./script.js', '<script src="./mobile/gallery-s
 html = html.replace('</body>', '<script>window.EbruMobile.mount();</script>\n    </body>');
 // Local-only origin. No remote scripts, camera downloads, analytics or inline network access.
 html = html.replace('<meta charset="utf-8">', `<meta charset="utf-8">\n        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'none'; media-src blob:; frame-src 'none'; object-src 'none'; base-uri 'none'">`);
+if (platform === 'ios') html = html.replace("img-src 'self' data: blob:", "img-src 'self' file: data: blob:");
 fs.writeFileSync(path.join(output, 'index.html'), html);
 fs.copyFileSync(path.join(root, 'mobile/privacy.html'), path.join(output, 'privacy.html'));
-console.log('Android offline assets prepared:', output);
+console.log(platform + ' offline assets prepared:', output);

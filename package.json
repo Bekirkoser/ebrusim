@@ -2,11 +2,14 @@
   "name": "ebrusim",
   "version": "1.0.0",
   "private": true,
-  "description": "Ebrusim offline Android painting studio",
+  "description": "Ebrusim offline mobile painting studio",
   "scripts": {
     "build:android": "node scripts/build-android.cjs",
     "dev": "node scripts/preview.cjs",
-    "test": "node tests/device-help.cjs && node tests/touch-input.cjs && node tests/usage-analytics.cjs && node tests/mobile-bridge.cjs && node tests/android-package.cjs"
+    "test": "node tests/device-help.cjs && node tests/touch-input.cjs && node tests/usage-analytics.cjs && node tests/mobile-bridge.cjs && node tests/android-package.cjs && node tests/ios-package.cjs",
+    "build:ios": "node scripts/build-android.cjs ios"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  }
 }

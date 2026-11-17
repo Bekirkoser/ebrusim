@@ -1,19 +1,26 @@
 'use strict';
 // This file is included only in the packaged app, never on the production website.
 window.EbruNative = (() => {
-    const available = typeof window.EbruAndroid?.postMessage === 'function';
+    const android = typeof window.EbruAndroid?.postMessage === 'function';
+    const ios = typeof window.webkit?.messageHandlers?.ebru?.postMessage === 'function';
+    const platform = ios ? 'ios' : android ? 'android' : 'preview';
+    const available = android || ios;
     const pending = new Map();
     let nextId = 0;
     function request(action, payload = {}) {
-        if (!available) return Promise.reject(new Error('Native Android bridge unavailable'));
+        if (!available) return Promise.reject(new Error('Native bridge unavailable'));
         return new Promise((resolve, reject) => {
             const id = String(++nextId);
             const timer = setTimeout(() => {
                 pending.delete(id);
-                reject(new Error('The Android operation timed out. Please try again.'));
-            }, action === 'saveFile' ? 300000 : 60000);
+                reject(new Error('The device operation timed out. Please try again.'));
+            }, ['saveFile', 'shareFile'].includes(action) ? 300000 : 60000);
             pending.set(id, { resolve, reject, timer });
-            try { window.EbruAndroid.postMessage(JSON.stringify({ id, action, ...payload })); }
+            try {
+                const message = JSON.stringify({ ...payload, id, action });
+                if (ios) window.webkit.messageHandlers.ebru.postMessage(message);
+                else window.EbruAndroid.postMessage(message);
+            }
             catch (error) { clearTimeout(timer); pending.delete(id); reject(error); }
         });
     }
@@ -26,5 +33,5 @@ window.EbruNative = (() => {
         else task.resolve(message.result);
     }
     document.documentElement.classList.add('ebru-app');
-    return { available, request, receive };
+    return { available, platform, request, receive };
 })();
