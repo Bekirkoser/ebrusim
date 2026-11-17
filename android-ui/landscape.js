@@ -18,8 +18,6 @@
         paint:'<path d="M12 2C9 7 5 10 5 15a7 7 0 0 0 14 0c0-5-4-8-7-13Z"/><path d="M8 15c0 2 1 3 3 3"/>',
         water:'<path d="M3 8c3-5 6 5 9 0s6 5 9 0M3 16c3-5 6 5 9 0s6 5 9 0"/>',
         close:'<path d="m6 6 12 12M18 6 6 18"/>',
-        fullscreen:'<path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/>',
-        restore:'<path d="M3 8h5V3M21 8h-5V3M8 21v-5H3M16 21v-5h5"/>',
         pause:'<path d="M8 5v14M16 5v14"/>',
         play:'<path d="m8 5 11 7-11 7Z"/>',
         picker:'<path d="m15 3 6 6-3 3-6-6 3-3ZM12 8l-8 8-1 5 5-1 8-8"/>'
@@ -62,7 +60,7 @@
     const color=makeButton(text('colors'),'paint','pc-color-button');color.replaceChildren();
     color.setAttribute('aria-controls','pc-colors');color.setAttribute('aria-expanded','false');
     const toggle=document.querySelector('.ebru-ui-toggle');
-    if(toggle){toggle.innerHTML=svg('fullscreen');toggle.classList.add('pc-fullscreen');}
+    if(toggle)toggle.classList.add('pc-visibility');
     tools.append(paint,water);if(toggle)tools.append(toggle);tools.append(color);
 
     const panel=document.createElement('aside');panel.id='pc-settings';panel.className='pc-panel pc-settings';panel.hidden=true;
@@ -151,7 +149,7 @@
     const syncHidden=()=>{
         const hidden=document.body.classList.contains('ebru-ui-hidden');
         if(hidden)closeAll();
-        if(toggle){toggle.innerHTML=svg(hidden?'restore':'fullscreen');toggle.classList.toggle('pc-restore',hidden);if(hidden)document.body.append(toggle);else tools.insertBefore(toggle,color);}
+        if(toggle){toggle.classList.toggle('pc-restore',hidden);if(hidden)document.body.append(toggle);else tools.insertBefore(toggle,color);}
     };
     new MutationObserver(syncHidden).observe(document.body,{attributes:true,attributeFilter:['class']});
     syncHidden();
@@ -161,7 +159,7 @@
     if(dialog){
         new MutationObserver(()=>{
             const video=dialog.querySelector(':scope > video');dialog.classList.toggle('pc-video-dialog',!!dialog.querySelector('video'));
-            const credits=dialog.querySelector('.ebru-credits');if(credits?.textContent.includes('Ebrusim 1.0.0'))credits.textContent=credits.textContent.replace('Ebrusim 1.0.0','Ebrusim 1.3.1');
+            const credits=dialog.querySelector('.ebru-credits');if(credits?.textContent.includes('Ebrusim 1.0.0'))credits.textContent=credits.textContent.replace('Ebrusim 1.0.0','Ebrusim 1.3.2');
             if(!video)return;
             const layout=document.createElement('div');layout.className='pc-video-layout';const media=document.createElement('div');media.className='pc-video-surface';media.append(video);
             const actions=document.createElement('section');actions.className='pc-video-actions';Array.from(dialog.children).filter(el=>el.tagName!=='HEADER').forEach(el=>actions.append(el));

@@ -10,6 +10,7 @@ const palette = source.match(/palette\.innerHTML = `([\s\S]*?)`;/)[1].replace('$
 const inlineTheme = source.match(/cursorStyle\.textContent = `([\s\S]*?)`;/)[1];
 html = html.replace('</head>', '<style>' + inlineTheme + '\nbody > canvas { background: #fafaf7; }\n</style></head>');
 const colors = [...source.matchAll(/hex: '(#[0-9a-f]{6})'/g)].map(x => x[1]);
+const eye = source.match(/uiToggle\.innerHTML = `([\s\S]*?)`;/)[1];
 const fixture = `
 window.config = { DROP_SIZE: 100, SPLAT_RADIUS: .25, VELOCITY_DISSIPATION: .2, CURL: 30, DYE_RESOLUTION: 512, PAUSED: false, BACK_COLOR: { r:255, g:255, b:255 } };
 window.initFramebuffers = () => {};
@@ -19,7 +20,7 @@ palette.innerHTML = ${JSON.stringify(palette)}; document.body.append(palette);
 const swatches = palette.querySelector('.ebru-palette-swatches');
 ${JSON.stringify(colors)}.forEach((hex,i) => { const button=document.createElement('button'); button.className='ebru-color-swatch'+(!i?' selected':''); button.style.background=hex; button.setAttribute('aria-label',hex); swatches.append(button); });
 EbruI18n.apply(palette);
-const input = document.createElement('div');input.className='ebru-input-controls';input.innerHTML='<button class="ebru-ui-toggle" aria-label="Hide all panels">◉</button>';document.body.append(input);const uiToggle=input.querySelector('button');uiToggle.addEventListener('click',()=>{const hide=document.body.classList.toggle('ebru-ui-hidden');uiToggle.setAttribute('aria-label',hide?'Show all panels':'Hide all panels');});
+const input = document.createElement('div');input.className='ebru-input-controls';input.innerHTML=${JSON.stringify('<button class="ebru-ui-toggle" aria-label="Hide all panels" aria-pressed="false">'+eye+'</button>')};document.body.append(input);const uiToggle=input.querySelector('button');uiToggle.addEventListener('click',()=>{const hide=document.body.classList.toggle('ebru-ui-hidden');uiToggle.setAttribute('aria-label',hide?'Show all panels':'Hide all panels');uiToggle.setAttribute('aria-pressed',String(hide));});
 `;
 html = html.replace(/<script src="\.\/script\.js[^\"]*"><\/script>/, '<script>' + fixture + '</script>');
 fs.writeFileSync(path.join(output, '_layout-fixture.html'), html);
