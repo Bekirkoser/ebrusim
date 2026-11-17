@@ -79,7 +79,7 @@
 .ebru-android-landscape body.ebru-ui-hidden .android-settings-toggle,
 .ebru-android-landscape body.ebru-ui-hidden .android-settings { display: none; }
 @media (max-width: 700px) {
-    .ebru-android-landscape .ebru-app-toolbar { width: calc(100vw - 230px); min-width: 220px; }
+    .ebru-android-landscape .ebru-app-toolbar { width: calc(100vw - 280px); min-width: 220px; }
     .ebru-android-landscape .ebru-app-toolbar button { flex-direction: column; gap: 2px; padding: 2px 3px; min-height: 38px; font-size: 9px; }
     .android-action-icon svg { width: 17px; height: 17px; }
     .ebru-android-landscape body .ebru-color-palette { width: calc(100vw - 96px); left: 8px; transform: none; }
