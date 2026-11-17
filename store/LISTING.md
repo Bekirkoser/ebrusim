@@ -69,5 +69,5 @@ before uninstalling the app.
 - Target audience and content rating: developer must complete the questionnaire.
 - Screenshots and feature graphic: capture/create final assets for the tested build;
   do not substitute web preview screenshots for actual Android screenshots.
-- Launcher icon: `android/app/src/main/res/drawable/launcher_foreground.xml` is an
-  editable vector. Supply a 512×512 store icon using the same artwork.
+- Store icon: `store/icon-512.png` (512×512); editable artwork in `store/icon.svg`.
+  The launcher uses the same artwork as an Android adaptive icon.
