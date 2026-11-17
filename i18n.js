@@ -111,7 +111,7 @@ window.EbruI18n = (() => {
         }
     };
     const storageKey = 'ebru-language';
-    let language = 'en';
+    let language = window.EbruNative && (navigator.language || '').startsWith('tr') ? 'tr' : 'en';
     try {
         const saved = localStorage.getItem(storageKey);
         if (saved === 'en' || saved === 'tr') language = saved;

@@ -212,6 +212,9 @@ public final class MainActivity extends Activity {
                 .setNegativeButton(R.string.stay, null).setPositiveButton(R.string.leave, (d, which) -> moveTaskToBack(true)).show();
         });
     }
+    // API 33+ uses the platform dispatcher registered in onCreate; this fallback
+    // exists solely for Android 8–12 and is never used for predictive gestures.
+    @SuppressLint("GestureBackNavigation")
     @Override public void onBackPressed() { handleBack(); }
     @Override protected void onPause() {
         if (web != null) { web.evaluateJavascript("window.dispatchEvent(new CustomEvent('ebru-app-active',{detail:false}))", null); web.onPause(); }

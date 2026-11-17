@@ -1,7 +1,7 @@
 name: Android build
 on:
   push:
-    branches: [main, codex/android-app]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 permissions:
@@ -28,6 +28,9 @@ jobs:
       - name: Build installable APK and unsigned Play bundle
         working-directory: android
         run: ./gradlew assembleDebug bundleRelease lint --no-daemon
+      - name: Show lint diagnostics on failure
+        if: failure()
+        run: cat android/app/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt
       - uses: actions/upload-artifact@v4
         with:
           name: ebrusim-android
