@@ -37,7 +37,7 @@
         const label = el.textContent;
         el.setAttribute('aria-label', label); el.title = label;
         const icon = document.createElement('span'); icon.className = 'android-action-icon'; icon.innerHTML = svg(key);
-        const caption = document.createElement('span'); caption.className = 'android-action-label'; caption.textContent = label;
+        const caption = document.createElement('span'); caption.className = 'android-action-label'; caption.textContent = key === 'gallery' ? (tr() ? 'Galeri' : 'Gallery') : label;
         el.replaceChildren(icon, caption);
     };
     if (toolbar) {
@@ -72,6 +72,13 @@
             range('size', 'DROP_SIZE', 25, 200, 5);
             range('flow', 'VELOCITY_DISSIPATION', 0, 4, 0.1);
             range('swirl', 'CURL', 0, 50, 1);
+            const paperLabel = document.createElement('label'); paperLabel.className = 'android-paper';
+            paperLabel.textContent = tr() ? 'Kağıt rengi' : 'Paper color';
+            const paper = document.createElement('input'); paper.type = 'color';
+            paper.value = '#' + ['r','g','b'].map(key => Math.round(config.BACK_COLOR[key]).toString(16).padStart(2,'0')).join('');
+            paper.setAttribute('aria-label', paperLabel.textContent);
+            paper.addEventListener('input', () => { const value = parseInt(paper.value.slice(1),16); config.BACK_COLOR = { r:(value>>16)&255, g:(value>>8)&255, b:value&255 }; });
+            paperLabel.append(paper); panel.append(paperLabel);
             const qualityLabel = document.createElement('label'); qualityLabel.textContent = text('quality');
             const quality = document.createElement('select'); quality.setAttribute('aria-label', text('quality'));
             [[256,'light'],[512,'balanced'],[1024,'detail']].forEach(([value,key]) => { const option = document.createElement('option'); option.value = value; option.textContent = text(key); quality.append(option); });
@@ -106,6 +113,7 @@
         new MutationObserver(() => {
             const video = dialog.querySelector(':scope > video');
             dialog.classList.toggle('android-video-dialog', !!dialog.querySelector('video'));
+            const credits = dialog.querySelector('.ebru-credits'); if (credits?.textContent.includes('Ebrusim 1.0.0')) credits.textContent = credits.textContent.replace('Ebrusim 1.0.0', 'Ebrusim 1.1.0');
             if (!video) return;
             const layout = document.createElement('div'); layout.className = 'android-video-layout';
             const preview = document.createElement('div'); preview.className = 'android-video-surface'; preview.append(video);
@@ -120,7 +128,7 @@
     window.EbruNative.closeOverlay = () => { if (!panel.hidden) { closeSettings(); return true; } return originalBack?.() || false; };
     window.addEventListener('ebru-language-change', () => {
         settingsButton.setAttribute('aria-label', text('settings')); settingsButton.title = text('settings');
-        renderSettings();
+        panel.setAttribute('aria-label', text('settings')); renderSettings();
         const edit = document.querySelector('.android-palette-edit'); if (edit) edit.setAttribute('aria-label', text('colors'));
     });
 })();

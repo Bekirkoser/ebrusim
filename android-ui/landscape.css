@@ -37,7 +37,7 @@
 .ebru-android-landscape .ebru-color-palette .ebru-palette-row { display: flex !important; flex-direction: row; align-items: center; gap: 8px; }
 .ebru-android-landscape .ebru-palette-swatches { display: flex; flex: 1; justify-content: flex-start; align-items: center; gap: 8px; min-width: 0; padding: 3px; margin: 0; max-height: none; overflow-x: auto; overflow-y: hidden; touch-action: pan-x; scrollbar-width: none; }
 .ebru-android-landscape .ebru-palette-swatches::-webkit-scrollbar { display: none; }
-.ebru-android-landscape .ebru-color-swatch { width: 34px; height: 34px; flex: 0 0 34px; border-width: 1px; border-color: #ffffff45; }
+.ebru-android-landscape .ebru-color-swatch { width: 40px; height: 40px; flex: 0 0 40px; border-width: 1px; border-color: #ffffff45; }
 .ebru-android-landscape .ebru-color-swatch.selected { outline: 2px solid white; outline-offset: 2px; border: 3px solid #171717; }
 .ebru-android-landscape .ebru-custom-color-picker { flex: 0 0 40px; height: 40px; margin: 0; }
 .ebru-android-landscape .ebru-custom-color-label { border: 1px solid #ffffff30; border-radius: 50%; font-size: 0; gap: 0; background: conic-gradient(#d96e69,#e1b760,#6ba897,#7199b7,#9f79a6,#d96e69); }
@@ -83,7 +83,7 @@
     .ebru-android-landscape .ebru-app-toolbar button { flex-direction: column; gap: 2px; padding: 2px 3px; min-height: 38px; font-size: 9px; }
     .android-action-icon svg { width: 17px; height: 17px; }
     .ebru-android-landscape body .ebru-color-palette { width: calc(100vw - 96px); left: 8px; transform: none; }
-    .ebru-android-landscape .ebru-color-swatch { width: 32px; height: 32px; flex-basis: 32px; }
+    .ebru-android-landscape .ebru-color-swatch { width: 40px; height: 40px; flex-basis: 40px; }
     .android-video-layout { grid-template-columns: minmax(0,1fr) 156px; gap: 12px; }
 }
 @media (min-width: 900px) and (min-height: 550px) {
@@ -92,3 +92,6 @@
     .ebru-android-landscape .android-settings { width: 300px; }
     .ebru-android-landscape .ebru-color-swatch { width: 40px; height: 40px; flex-basis: 40px; }
 }
+
+.android-settings .android-paper { display: flex; align-items: center; justify-content: space-between; min-height: 36px; }
+.android-paper input { width: 48px; height: 36px; border: 1px solid #555; border-radius: 8px; background: transparent; padding: 2px; }
