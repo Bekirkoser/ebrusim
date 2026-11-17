@@ -1,7 +1,7 @@
 # Ebrusim Android — ilk sürüm
 
 Android uygulaması `android/` klasöründedir. İnternet bağlantısı olmadan çalışır;
-ebrusim.art sitesini açmaz. Paket kimliği `art.ebrusim.app`, sürüm `1.3.0` (4).
+ebrusim.art sitesini açmaz. Paket kimliği `art.ebrusim.app`, sürüm `1.3.1` (5).
 Android 8.0+ ve OpenGL ES 3 destekli cihazlar hedeflenir; target/compile SDK 36.
 
 ## Telefonunda denemek
@@ -133,3 +133,7 @@ Referansın illüstrasyonu veya ürün simgeleri uygulamaya eklenmemiştir.
 Debug APK **Ebrusim Preview** (`art.ebrusim.app.preview`) adıyla ayrı kurulur. Önceki uygulamaları kaldırmak gerekmez; eski çalışmalar o uygulamalarda kalır, otomatik taşınmaz. CI debug imzasını Actions önbelleğinde saklar; önbellek korunduğu sürece sonraki Preview paketleri aynı uygulamayı güncelleyebilir. Üretim için ayrı, kalıcı release imzası gerekir.
 
 iPhone ve ortak mobil dosyalar bu yenilemede değiştirilmemiştir.
+
+## 1.3.1 yerleşim düzeltmeleri
+
+Üst çubukta kullanıcının logosu ve küçük `ebrusim.art` yazısı yer alır; küçük telefonlarda da görünür. Hızlı sürgüler yalnızca kendi sabit sayısal değerlerini gösterir, tuvali örten geçici değer balonu kaldırıldı. Arayüz gizlenince tuval tüm kullanılabilir uygulama alanını kaplar; geri açınca normal yerleşime döner. Preview paket kimliği ve imza önbelleği korunur.

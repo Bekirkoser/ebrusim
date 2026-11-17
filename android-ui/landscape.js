@@ -39,7 +39,9 @@
     const bar=document.createElement('header'); bar.className='pc-toolbar';
     const actions=document.querySelector('.ebru-app-toolbar');
     const tools=document.createElement('nav'); tools.className='pc-tools'; tools.setAttribute('aria-label',tr()?'Boyama araçları':'Painting tools');
-    const brand=document.createElement('span');brand.className='pc-brand';brand.textContent='Ebrusim';
+    const brand=document.createElement('span');brand.className='pc-brand';
+    const brandLogo=document.createElement('img');brandLogo.src='./android-ui/ebrusim-logo.png';brandLogo.alt='';brandLogo.width=24;brandLogo.height=24;brandLogo.draggable=false;
+    const brandName=document.createElement('span');brandName.textContent='ebrusim.art';brand.append(brandLogo,brandName);
     bar.append(actions,brand,tools); document.body.append(bar);
     function decorate(el) {
         const key=el.dataset.mobileKey; if(!icons[key])return;
@@ -141,11 +143,9 @@
             const name=document.createElement('span');name.className='pc-sr-only';name.textContent=text(key);name.dataset.pcText=key;
             const input=document.createElement('input');input.type='range';input.min=min;input.max=max;input.step=step;input.value=config[property];input.dataset.pcProperty=property;input.setAttribute('aria-label',text(key));input.dataset.pcKey=key;
             const readout=document.createElement('output');readout.className='pc-rail-readout';
-            input.addEventListener('input',()=>{config[property]=Number(input.value);syncRange(input);panel.querySelectorAll('[data-pc-property="'+property+'"]').forEach(field=>{field.value=input.value;syncRange(field);const output=field.closest('label').querySelector('output');if(output)output.textContent=input.value;});bubble.textContent=text(key)+' '+Number(input.value).toFixed(step<1?2:0);bubble.hidden=false;});
-            ['pointerup','pointercancel','blur','change'].forEach(event=>input.addEventListener(event,()=>{bubble.hidden=true;}));
+            input.addEventListener('input',()=>{config[property]=Number(input.value);syncRange(input);panel.querySelectorAll('[data-pc-property="'+property+'"]').forEach(field=>{field.value=input.value;syncRange(field);const output=field.closest('label').querySelector('output');if(output)output.textContent=input.value;});});
             railInputs[property]=input;row.append(name,readout,input);rail.append(row);syncRange(input);
         };
-        const bubble=document.createElement('output');bubble.className='pc-rail-value';bubble.hidden=true;rail.append(bubble);
         addRail('size','DROP_SIZE',25,200,5);rail.append(pause);addRail('radius','SPLAT_RADIUS',.01,1,.01);updatePause();document.body.append(rail);
     }
     const syncHidden=()=>{
@@ -161,7 +161,7 @@
     if(dialog){
         new MutationObserver(()=>{
             const video=dialog.querySelector(':scope > video');dialog.classList.toggle('pc-video-dialog',!!dialog.querySelector('video'));
-            const credits=dialog.querySelector('.ebru-credits');if(credits?.textContent.includes('Ebrusim 1.0.0'))credits.textContent=credits.textContent.replace('Ebrusim 1.0.0','Ebrusim 1.3.0');
+            const credits=dialog.querySelector('.ebru-credits');if(credits?.textContent.includes('Ebrusim 1.0.0'))credits.textContent=credits.textContent.replace('Ebrusim 1.0.0','Ebrusim 1.3.1');
             if(!video)return;
             const layout=document.createElement('div');layout.className='pc-video-layout';const media=document.createElement('div');media.className='pc-video-surface';media.append(video);
             const actions=document.createElement('section');actions.className='pc-video-actions';Array.from(dialog.children).filter(el=>el.tagName!=='HEADER').forEach(el=>actions.append(el));

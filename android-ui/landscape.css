@@ -119,7 +119,6 @@
 .pc-pause[aria-pressed="true"] {
     color: #9ac8ff; background: #79b6ff18;
 }
-.pc-rail-value { position: absolute; top: 6px; left: 46px; padding: 12px 16px; background: var(--pc-panel); color: #d6d5d9; white-space: nowrap; border-radius: 5px; box-shadow: 0 3px 16px #0004; font: 13px var(--ebru-ui-font); }
 .pc-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .pc-panel {
     position: fixed; z-index: 1800; top: 64px; bottom: auto; width: 296px;
@@ -274,7 +273,6 @@
     .ebru-android-landscape .ebru-app-toolbar button,.pc-toolbar .pc-tool,.ebru-android-landscape .pc-toolbar .ebru-ui-toggle { flex-basis: 40px; width: 40px; min-width: 40px; height: 40px; min-height: 40px; }
     .ebru-android-landscape .ebru-app-toolbar button[data-mobile-key="gallery"] { min-width: 82px; padding-left: 4px; padding-right: 8px; }
     .pc-color-button { width: 40px; height: 40px; flex-basis: 40px; margin-left: 5px; }
-    .pc-brand { display: none; }
     .ebru-android-landscape body > canvas { inset: 66px 14px 14px 66px; width: calc(100% - 80px); height: calc(100% - 80px); }
     .pc-sidebar { left: 10px; width: 42px; height: calc(100dvh - 92px); padding: 8px 0; gap: 6px; border-radius: 13px; }
     .pc-rail-control { gap: 4px; }
@@ -284,8 +282,20 @@
     .pc-panel,.ebru-android-landscape body .ebru-color-palette { top: 60px; max-height: calc(100dvh - 72px); }
 }
 
-.pc-brand { position: absolute; left: 50%; transform: translateX(-50%); font: 570 14px var(--ebru-ui-font); letter-spacing: -.04em; color: #e5e0ec; pointer-events: none; }
-@media (max-width:780px) { .pc-brand { display: none; } }
+.pc-brand { display: flex; flex: 1; min-width: 0; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; font: 570 13px var(--ebru-ui-font); letter-spacing: -.035em; color: #e5e0ec; pointer-events: none; }
+.pc-brand img { width: 24px; height: 24px; object-fit: contain; flex: 0 0 24px; }
+@media (max-width:640px) {
+    .pc-brand { font-size: 12px; gap: 4px; }
+    .pc-brand img { width: 22px; height: 22px; flex-basis: 22px; }
+}
+@media (max-width:540px) {
+    .ebru-android-landscape .ebru-app-toolbar button[data-mobile-key="gallery"] { min-width: 40px; padding: 0; }
+    .ebru-android-landscape [data-mobile-key="gallery"] .pc-action-label { display: none; }
+}
+/* Immersive mode releases toolbar/sidebar space, including on short phones. */
+.ebru-android-landscape body.ebru-ui-hidden > canvas {
+    inset: 0; width: 100%; height: 100%; border-radius: 0; box-shadow: none;
+}
 .pc-action-icon svg,.pc-tool svg,.pc-toolbar .ebru-ui-toggle svg { width: 23px; height: 23px; }
 [data-mobile-key="gallery"] .pc-action-icon svg { width: 18px; height: 18px; }
 .pc-color-button::after { content: ''; width: 28px; height: 28px; border-radius: 50%; background: var(--chosen-color,#c94b3c); border: 1px solid #ffffff25; }
