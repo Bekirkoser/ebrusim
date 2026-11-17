@@ -1,0 +1,47 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'art.ebrusim.app'
+    buildFeatures { buildConfig true }
+    compileSdk 36
+    defaultConfig {
+        applicationId 'art.ebrusim.app'
+        minSdk 26
+        targetSdk 36
+        versionCode 1
+        versionName '1.0.0'
+    }
+    def signingFile = rootProject.file('keystore.properties')
+    if (signingFile.exists()) {
+        def properties = new Properties()
+        signingFile.withInputStream { properties.load(it) }
+        signingConfigs {
+            release {
+                storeFile rootProject.file(properties['storeFile'])
+                storePassword properties['storePassword']
+                keyAlias properties['keyAlias']
+                keyPassword properties['keyPassword']
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (signingFile.exists()) signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+// Always package current source, including when building directly in Android Studio.
+tasks.register('prepareWebAssets', Exec) {
+    workingDir rootProject.projectDir.parentFile
+    commandLine 'node', 'scripts/build-android.cjs'
+    inputs.files(fileTree(rootProject.projectDir.parentFile) {
+        include '*.js', '*.html', '*.css', '*.ttf', 'LDR_LLL1_0.png', 'mobile/**', 'scripts/build-android.cjs'
+    })
+    outputs.dir('src/main/assets/www')
+}
+tasks.named('preBuild').configure { dependsOn 'prepareWebAssets' }

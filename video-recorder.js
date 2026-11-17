@@ -31,7 +31,7 @@ window.EbruVideoRecorder = class EbruVideoRecorder {
         let session;
         try {
             const surface = document.createElement('canvas');
-            const scale = Math.min(1, 1920 / this.canvas.width, 1080 / this.canvas.height);
+            const scale = Math.min(1, (window.EbruNative ? 1280 : 1920) / this.canvas.width, (window.EbruNative ? 720 : 1080) / this.canvas.height);
             surface.width = Math.max(2, Math.floor(this.canvas.width * scale / 2) * 2);
             surface.height = Math.max(2, Math.floor(this.canvas.height * scale / 2) * 2);
             const context = surface.getContext('2d', { alpha: false });
@@ -49,11 +49,11 @@ window.EbruVideoRecorder = class EbruVideoRecorder {
             for (const mimeType of candidates) {
                 if (!MediaRecorder.isTypeSupported || !MediaRecorder.isTypeSupported(mimeType)) continue;
                 try {
-                    session.recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 6000000 });
+                    session.recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: window.EbruNative ? 2000000 : 6000000 });
                     break;
                 } catch { /* Try the next encoder when a supported format cannot start. */ }
             }
-            session.recorder ||= new MediaRecorder(stream, { videoBitsPerSecond: 6000000 });
+            session.recorder ||= new MediaRecorder(stream, { videoBitsPerSecond: window.EbruNative ? 2000000 : 6000000 });
             session.recorder.ondataavailable = event => {
                 if (!session.failed && event.data.size) session.chunks.push(event.data);
             };
@@ -61,7 +61,10 @@ window.EbruVideoRecorder = class EbruVideoRecorder {
             session.recorder.onstop = () => this.finish(session);
             this.errorKey = '';
             this.state = 'recording';
-            session.timer = setInterval(() => this.onStateChange(), 1000);
+            session.timer = setInterval(() => {
+                this.onStateChange();
+                if (window.EbruNative && this.elapsedSeconds >= 45) this.stop();
+            }, 1000);
             this.onStateChange();
         } catch {
             this.fail(session, 'videoError');
@@ -114,7 +117,7 @@ window.EbruVideoRecorder = class EbruVideoRecorder {
         }
     }
 
-    finish(session) {
+    async finish(session) {
         if (this.session !== session || session.failed) return;
         try {
             if (!session.chunks.length) throw new Error('Empty recording');
@@ -122,7 +125,7 @@ window.EbruVideoRecorder = class EbruVideoRecorder {
             const blob = new Blob(session.chunks, { type: mimeType });
             const extension = mimeType.startsWith('video/mp4') ? 'mp4' : 'webm';
             const filename = 'ebrusim-' + new Date().toISOString().replace(/[:.]/g, '-') + '.' + extension;
-            this.download(blob, filename);
+            await this.download(blob, filename);
             window.ebruAnalytics?.track('video_save');
             this.errorKey = '';
         } catch {
@@ -132,7 +135,8 @@ window.EbruVideoRecorder = class EbruVideoRecorder {
         this.onStateChange();
     }
 
-    download(blob, filename) {
+    async download(blob, filename) {
+        if (window.EbruMobile) { window.EbruMobile.showVideo(blob); return; }
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
