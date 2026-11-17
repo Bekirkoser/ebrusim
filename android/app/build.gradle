@@ -11,6 +11,11 @@ android {
         versionCode 5
         versionName '1.3.1'
     }
+    // CI chooses an explicit cached debug key; local Android Studio keeps its normal key.
+    def previewStore = System.getenv('EBRUSIM_PREVIEW_KEYSTORE')
+    if (previewStore) {
+        signingConfigs.debug.storeFile = file(previewStore)
+    }
     def signingFile = rootProject.file('keystore.properties')
     if (signingFile.exists()) {
         def properties = new Properties()
@@ -27,8 +32,8 @@ android {
     buildTypes {
         debug {
             // Install beside the original test app so saved artworks remain safe.
-            applicationIdSuffix '.preview'
-            resValue 'string', 'app_name', 'Ebrusim Preview'
+            applicationIdSuffix '.preview131'
+            resValue 'string', 'app_name', 'Ebrusim 1.3.1'
         }
         release {
             minifyEnabled false

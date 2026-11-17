@@ -136,4 +136,4 @@ iPhone ve ortak mobil dosyalar bu yenilemede değiştirilmemiştir.
 
 ## 1.3.1 yerleşim düzeltmeleri
 
-Üst çubukta kullanıcının logosu ve küçük `ebrusim.art` yazısı yer alır; küçük telefonlarda da görünür. Hızlı sürgüler yalnızca kendi sabit sayısal değerlerini gösterir, tuvali örten geçici değer balonu kaldırıldı. Arayüz gizlenince tuval tüm kullanılabilir uygulama alanını kaplar; geri açınca normal yerleşime döner. Preview paket kimliği ve imza önbelleği korunur.
+Üst çubukta kullanıcının logosu ve küçük `ebrusim.art` yazısı yer alır; küçük telefonlarda da görünür. Hızlı sürgüler yalnızca kendi sabit sayısal değerlerini gösterir, tuvali örten geçici değer balonu kaldırıldı. Arayüz gizlenince tuval tüm kullanılabilir uygulama alanını kaplar; geri açınca normal yerleşime döner. İlk imza önbelleği yolu CI ortamında oluşmadığı için 1.3.0 ile güncelleme imzası eşleşmez. Bu sürüm `art.ebrusim.app.preview131` / **Ebrusim 1.3.1** olarak ayrı kurulur; önceki uygulama ve çalışmaları silinmez. Yeni CI akışı açıkça belirtilen test anahtarını oluşturur ve önbelleğe alır; yerel Android Studio normal debug anahtarını kullanır.
