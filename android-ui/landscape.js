@@ -75,7 +75,7 @@
         const row=document.createElement('label');row.className='pc-setting-row';
         const heading=document.createElement('div');const name=document.createElement('span');name.textContent=text(key);
         const value=document.createElement('output');value.textContent=config[property];heading.append(name,value);
-        const input=document.createElement('input');input.type='range';input.min=min;input.max=max;input.step=step;input.value=config[property];input.setAttribute('aria-label',text(key));
+        const input=document.createElement('input');input.type='range';input.min=min;input.max=max;input.step=step;input.value=config[property];input.dataset.pcProperty=property;input.setAttribute('aria-label',text(key));
         input.addEventListener('input',()=>{config[property]=Number(input.value);value.textContent=input.value;if(railInputs[property])railInputs[property].value=input.value;});
         row.append(heading,input);panel.append(row);
     }
@@ -130,8 +130,8 @@
         const addRail=(key,property,min,max,step)=>{
             const row=document.createElement('label');row.className='pc-rail-control';
             const name=document.createElement('span');name.className='pc-sr-only';name.textContent=text(key);name.dataset.pcText=key;
-            const input=document.createElement('input');input.type='range';input.min=min;input.max=max;input.step=step;input.value=config[property];input.setAttribute('aria-label',text(key));input.dataset.pcKey=key;
-            input.addEventListener('input',()=>{config[property]=Number(input.value);bubble.textContent=text(key)+' '+Number(input.value).toFixed(step<1?2:0);bubble.hidden=false;});
+            const input=document.createElement('input');input.type='range';input.min=min;input.max=max;input.step=step;input.value=config[property];input.dataset.pcProperty=property;input.setAttribute('aria-label',text(key));input.dataset.pcKey=key;
+            input.addEventListener('input',()=>{config[property]=Number(input.value);panel.querySelectorAll('[data-pc-property="'+property+'"]').forEach(field=>{field.value=input.value;const output=field.closest('label').querySelector('output');if(output)output.textContent=input.value;});bubble.textContent=text(key)+' '+Number(input.value).toFixed(step<1?2:0);bubble.hidden=false;});
             ['pointerup','pointercancel','blur','change'].forEach(event=>input.addEventListener(event,()=>{bubble.hidden=true;}));
             railInputs[property]=input;row.append(name,input);rail.append(row);
         };
