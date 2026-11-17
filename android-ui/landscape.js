@@ -1,134 +1,170 @@
 'use strict';
-// Android-only layout adapter: no shared iPhone or website UI is changed.
+// Android-only studio layout. The iPhone and website UI remain independent.
 (() => {
-    document.documentElement.classList.add('ebru-android-landscape');
-    const tr = () => window.EbruI18n.language === 'tr';
+    const root = document.documentElement;
+    root.classList.add('ebru-android-landscape');
+    const tr = () => EbruI18n.language === 'tr';
     const words = {
-        en: { settings: 'Settings', close: 'Close settings', size: 'Drop size', flow: 'Flow', swirl: 'Swirl', quality: 'Quality', balanced: 'Balanced', detail: 'Detailed', light: 'Battery saver', paused: 'Pause water', clear: 'New canvas', clearPrompt: 'Clear the canvas? Save your current artwork first.', colors: 'Edit palette', about: 'About & privacy', record: 'Record', rotate: 'Turn your phone sideways', rotateHint: 'Ebrusim is designed for landscape painting.' },
-        tr: { settings: 'Ayarlar', close: 'Ayarları kapat', size: 'Damla boyutu', flow: 'Akış', swirl: 'Girdap', quality: 'Kalite', balanced: 'Dengeli', detail: 'Detaylı', light: 'Pil tasarrufu', paused: 'Suyu duraklat', clear: 'Yeni tuval', clearPrompt: 'Tuval temizlensin mi? Önce mevcut çalışmanı kaydet.', colors: 'Paleti düzenle', about: 'Hakkında ve gizlilik', record: 'Kayıt', rotate: 'Telefonunu yatay çevir', rotateHint: 'Ebrusim yatay ekranda boyamak için tasarlandı.' }
+        tr: { gallery:'Galeri', settings:'İşlemler', close:'Kapat', size:'Damla boyutu', radius:'Etki alanı', flow:'Akış', swirl:'Girdap', quality:'Kalite', balanced:'Dengeli', detail:'Detaylı', light:'Pil tasarrufu', paused:'Suyu duraklat', clear:'Tuvali temizle', clearPrompt:'Tuval temizlensin mi? Önce mevcut çalışmanı kaydet.', colors:'Renkler', paper:'Kağıt rengi', about:'Hakkında ve gizlilik', help:'Nasıl kullanılır?', paint:'Damla ayarları', water:'Akış ayarları', canvas:'Tuval', preferences:'Tercihler', language:'Dil' },
+        en: { gallery:'Gallery', settings:'Actions', close:'Close', size:'Drop size', radius:'Effect radius', flow:'Flow', swirl:'Swirl', quality:'Quality', balanced:'Balanced', detail:'Detailed', light:'Battery saver', paused:'Pause water', clear:'Clear canvas', clearPrompt:'Clear the canvas? Save your artwork first.', colors:'Colors', paper:'Paper color', about:'About & privacy', help:'How to use', paint:'Paint settings', water:'Flow settings', canvas:'Canvas', preferences:'Preferences', language:'Language' }
     };
     const text = key => words[tr() ? 'tr' : 'en'][key];
     const icons = {
-        gallery: '<rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8" cy="8" r="1.5"/><path d="m4 17 5-5 4 4 3-3 4 4"/>',
-        save: '<path d="M12 3v12m-4-4 4 4 4-4M5 16v4h14v-4"/>',
-        share: '<path d="M12 15V3m-4 4 4-4 4 4M5 11v9h14v-9"/>',
-        record: '<rect x="3" y="5" width="13" height="14" rx="3"/><path d="m16 10 5-3v10l-5-3"/>',
-        settings: '<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="18" r="2"/>',
-        colors: '<path d="m15 4 5 5M4 20l5-1L21 7l-4-4L5 15Z"/>',
-        close: '<path d="m6 6 12 12M18 6 6 18"/>'
+        gallery:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="m4 17 5-5 4 4 3-3 4 4"/>',
+        save:'<path d="M12 3v12m-4-4 4 4 4-4M5 17v4h14v-4"/>',
+        share:'<path d="M12 15V3m-4 4 4-4 4 4M5 11v10h14V11"/>',
+        record:'<rect x="3" y="6" width="12" height="12" rx="2"/><path d="m15 10 6-3v10l-6-3"/>',
+        settings:'<path d="M14 6a5 5 0 0 0-6 6l-5 5a2 2 0 0 0 4 4l5-5a5 5 0 0 0 6-6l-3 3-4-4 3-3Z"/>',
+        paint:'<path d="M12 2C9 7 5 10 5 15a7 7 0 0 0 14 0c0-5-4-8-7-13Z"/><path d="M8 15c0 2 1 3 3 3"/>',
+        water:'<path d="M2 6c4-4 6 4 10 0s6 4 10 0M2 12c4-4 6 4 10 0s6 4 10 0M2 18c4-4 6 4 10 0s6 4 10 0"/>',
+        close:'<path d="m6 6 12 12M18 6 6 18"/>',
+        fullscreen:'<path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/>',
+        restore:'<path d="M3 8h5V3M21 8h-5V3M8 21v-5H3M16 21v-5h5"/>',
+        pause:'<path d="M8 5v14M16 5v14"/>',
+        play:'<path d="m8 5 11 7-11 7Z"/>',
+        picker:'<path d="m15 3 6 6-3 3-6-6 3-3ZM12 8l-8 8-1 5 5-1 8-8"/>'
     };
-    const svg = key => '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + icons[key] + '</svg>';
-    const button = (label, icon) => {
-        const el = document.createElement('button'); el.type = 'button';
-        el.setAttribute('aria-label', label); el.title = label;
-        el.innerHTML = svg(icon); return el;
+    const svg = key => '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+icons[key]+'</svg>';
+    const makeButton = (label, icon, className='') => {
+        const el=document.createElement('button'); el.type='button'; el.className=className;
+        el.setAttribute('aria-label',label); el.title=label; el.innerHTML=svg(icon); return el;
     };
-    // Start on the canvas. Instructions remain one tap away.
-    const help = document.querySelector('.ebru-info-overlay');
-    const language = document.querySelector('.ebru-language');
-    help.classList.remove('is-open'); help.setAttribute('aria-hidden', 'true');
-    document.querySelector('.ebru-info-button').setAttribute('aria-expanded', 'false');
-    document.body.insertBefore(language, help);
+    const studio=window.EbruStudio;
+    const help=document.querySelector('.ebru-info-overlay');
+    const helpButton=document.querySelector('.ebru-info-button');
+    const language=document.querySelector('.ebru-language');
+    help.classList.remove('is-open'); help.setAttribute('aria-hidden','true');
+    helpButton.setAttribute('aria-expanded','false'); document.body.insertBefore(language,help);
 
-    const toolbar = document.querySelector('.ebru-app-toolbar');
-    const decorate = el => {
-        const key = el.dataset.mobileKey;
-        if (!icons[key]) return;
-        const label = el.textContent;
-        el.setAttribute('aria-label', label); el.title = label;
-        const icon = document.createElement('span'); icon.className = 'android-action-icon'; icon.innerHTML = svg(key);
-        const caption = document.createElement('span'); caption.className = 'android-action-label'; caption.textContent = key === 'gallery' ? (tr() ? 'Galeri' : 'Gallery') : label;
-        el.replaceChildren(icon, caption);
-    };
-    if (toolbar) {
-        toolbar.querySelectorAll('button').forEach(decorate);
-        new MutationObserver(records => {
-            const buttons = new Set(records.map(record => record.target.closest?.('button')).filter(Boolean));
-            buttons.forEach(el => { if (!el.querySelector('.android-action-label')) decorate(el); });
-        }).observe(toolbar, { childList: true, subtree: true, characterData: true });
+    const bar=document.createElement('header'); bar.className='pc-toolbar';
+    const actions=document.querySelector('.ebru-app-toolbar');
+    const tools=document.createElement('nav'); tools.className='pc-tools'; tools.setAttribute('aria-label',tr()?'Boyama araçları':'Painting tools');
+    bar.append(actions,tools); document.body.append(bar);
+    function decorate(el) {
+        const key=el.dataset.mobileKey; if(!icons[key])return;
+        const label=el.textContent; el.title=label; el.setAttribute('aria-label',label);
+        const caption=document.createElement('span');caption.className='pc-action-label';caption.textContent=key==='gallery'?text('gallery'):label;
+        const icon=document.createElement('span');icon.className='pc-action-icon';icon.innerHTML=svg(key);
+        el.replaceChildren(icon,caption);
     }
+    actions.querySelectorAll('[data-mobile-key]').forEach(decorate);
+    new MutationObserver(records=>{
+        new Set(records.map(r=>r.target.closest?.('[data-mobile-key]')).filter(Boolean)).forEach(el=>{if(!el.querySelector('.pc-action-label'))decorate(el);});
+    }).observe(actions,{childList:true,subtree:true,characterData:true});
+    const settings=makeButton(text('settings'),'settings','pc-tool');
+    settings.setAttribute('aria-controls','pc-settings');settings.setAttribute('aria-expanded','false');
+    actions.insertBefore(settings,actions.children[1]);
+    const paint=makeButton(text('paint'),'paint','pc-tool');
+    const water=makeButton(text('water'),'water','pc-tool');
+    const color=makeButton(text('colors'),'paint','pc-color-button');color.replaceChildren();
+    color.setAttribute('aria-controls','pc-colors');color.setAttribute('aria-expanded','false');
+    const toggle=document.querySelector('.ebru-ui-toggle');
+    if(toggle){toggle.innerHTML=svg('fullscreen');toggle.classList.add('pc-fullscreen');}
+    tools.append(paint,water);if(toggle)tools.append(toggle);tools.append(color);
 
-    const settingsButton = button(text('settings'), 'settings'); settingsButton.className = 'android-settings-toggle';
-    settingsButton.setAttribute('aria-expanded', 'false'); settingsButton.setAttribute('aria-controls', 'android-settings');
-    const panel = document.createElement('aside'); panel.className = 'android-settings'; panel.id = 'android-settings'; panel.hidden = true;
-    panel.setAttribute('aria-label', text('settings'));
-    document.body.append(settingsButton, panel);
-    let settingInputs = [];
-    const closeSettings = () => { panel.hidden = true; settingsButton.setAttribute('aria-expanded', 'false'); };
-    settingsButton.addEventListener('click', () => { panel.hidden = !panel.hidden; settingsButton.setAttribute('aria-expanded', String(!panel.hidden)); });
-    function renderSettings() {
-        panel.replaceChildren(); settingInputs = [];
-        const header = document.createElement('header'); const heading = document.createElement('h2'); heading.textContent = text('settings');
-        const close = button(text('close'), 'close'); close.addEventListener('click', closeSettings); header.append(heading, close); panel.append(header);
-        if (window.EbruStudio) {
-            const range = (label, property, min, max, step) => {
-                const row = document.createElement('label'); const name = document.createElement('span'); const output = document.createElement('output');
-                name.textContent = text(label); const input = document.createElement('input');
-                input.type = 'range'; input.min = min; input.max = max; input.step = step; input.value = config[property];
-                input.setAttribute('aria-label', text(label)); output.textContent = input.value;
-                input.addEventListener('input', () => { config[property] = Number(input.value); output.textContent = input.value; });
-                const title = document.createElement('div'); title.append(name, output); row.append(title, input); panel.append(row); settingInputs.push(input);
-            };
-            range('size', 'DROP_SIZE', 25, 200, 5);
-            range('flow', 'VELOCITY_DISSIPATION', 0, 4, 0.1);
-            range('swirl', 'CURL', 0, 50, 1);
-            const paperLabel = document.createElement('label'); paperLabel.className = 'android-paper';
-            paperLabel.textContent = tr() ? 'Kağıt rengi' : 'Paper color';
-            const paper = document.createElement('input'); paper.type = 'color';
-            paper.value = '#' + ['r','g','b'].map(key => Math.round(config.BACK_COLOR[key]).toString(16).padStart(2,'0')).join('');
-            paper.setAttribute('aria-label', paperLabel.textContent);
-            paper.addEventListener('input', () => { const value = parseInt(paper.value.slice(1),16); config.BACK_COLOR = { r:(value>>16)&255, g:(value>>8)&255, b:value&255 }; });
-            paperLabel.append(paper); panel.append(paperLabel);
-            const qualityLabel = document.createElement('label'); qualityLabel.textContent = text('quality');
-            const quality = document.createElement('select'); quality.setAttribute('aria-label', text('quality'));
-            [[256,'light'],[512,'balanced'],[1024,'detail']].forEach(([value,key]) => { const option = document.createElement('option'); option.value = value; option.textContent = text(key); quality.append(option); });
-            quality.value = config.DYE_RESOLUTION;
-            quality.addEventListener('change', () => { config.DYE_RESOLUTION = Number(quality.value); initFramebuffers(); });
-            qualityLabel.append(quality); panel.append(qualityLabel);
-            const pauseLabel = document.createElement('label'); pauseLabel.className = 'android-pause'; pauseLabel.textContent = text('paused');
-            const pause = document.createElement('input'); pause.type = 'checkbox'; pause.checked = config.PAUSED;
-            pause.addEventListener('change', () => { config.PAUSED = pause.checked; }); pauseLabel.append(pause); panel.append(pauseLabel);
-            const clear = document.createElement('button'); clear.textContent = text('clear'); clear.className = 'android-new-canvas';
-            clear.addEventListener('click', () => { if (confirm(text('clearPrompt'))) { EbruStudio.clear(); closeSettings(); } }); panel.append(clear);
+    const panel=document.createElement('aside');panel.id='pc-settings';panel.className='pc-panel pc-settings';panel.hidden=true;
+    document.body.append(panel);
+    const palette=document.querySelector('.ebru-color-palette');
+    const closePanel=()=>{panel.hidden=true;[settings,paint,water].forEach(b=>b.setAttribute('aria-expanded','false'));};
+    const closeColors=()=>{if(document.body.classList.contains('pc-colors-open'))document.body.classList.remove('pc-colors-open');color.setAttribute('aria-expanded','false');};
+    const closeAll=()=>{closePanel();closeColors();};
+    let railInputs={};
+    function label(el,key){el.setAttribute('aria-label',text(key));el.title=text(key);}
+    function sectionTitle(key){const title=document.createElement('h3');title.textContent=text(key);panel.append(title);}
+    function range(key,property,min,max,step){
+        const row=document.createElement('label');row.className='pc-setting-row';
+        const heading=document.createElement('div');const name=document.createElement('span');name.textContent=text(key);
+        const value=document.createElement('output');value.textContent=config[property];heading.append(name,value);
+        const input=document.createElement('input');input.type='range';input.min=min;input.max=max;input.step=step;input.value=config[property];input.setAttribute('aria-label',text(key));
+        input.addEventListener('input',()=>{config[property]=Number(input.value);value.textContent=input.value;if(railInputs[property])railInputs[property].value=input.value;});
+        row.append(heading,input);panel.append(row);
+    }
+    const pause=makeButton(text('paused'),'pause','pc-pause');
+    const updatePause=()=>{if(!studio)return;pause.innerHTML=svg(config.PAUSED?'play':'pause');pause.setAttribute('aria-pressed',String(config.PAUSED));};
+    pause.addEventListener('click',()=>{if(!studio)return;config.PAUSED=!config.PAUSED;updatePause();});
+    function renderPanel(mode='all'){
+        panel.dataset.mode=mode;panel.replaceChildren();panel.setAttribute('aria-label',text(mode==='paint'?'paint':mode==='water'?'water':'settings'));
+        const head=document.createElement('header');const title=document.createElement('h2');title.textContent=text(mode==='paint'?'paint':mode==='water'?'water':'settings');
+        const close=makeButton(text('close'),'close');close.addEventListener('click',closePanel);head.append(title,close);panel.append(head);
+        if(studio){
+            if(mode==='all'||mode==='paint'){sectionTitle('paint');range('size','DROP_SIZE',25,200,5);range('radius','SPLAT_RADIUS',.01,1,.01);}
+            if(mode==='all'||mode==='water'){sectionTitle('water');range('flow','VELOCITY_DISSIPATION',0,4,.1);range('swirl','CURL',0,50,1);}
+            if(mode==='all'){
+                sectionTitle('canvas');
+                const paperLabel=document.createElement('label');paperLabel.className='pc-inline-setting';paperLabel.textContent=text('paper');
+                const paper=document.createElement('input');paper.type='color';paper.value='#'+['r','g','b'].map(k=>Math.round(config.BACK_COLOR[k]).toString(16).padStart(2,'0')).join('');paper.setAttribute('aria-label',text('paper'));
+                paper.addEventListener('input',()=>{const v=parseInt(paper.value.slice(1),16);config.BACK_COLOR={r:(v>>16)&255,g:(v>>8)&255,b:v&255};});paperLabel.append(paper);panel.append(paperLabel);
+                const qualityLabel=document.createElement('label');qualityLabel.className='pc-inline-setting';qualityLabel.textContent=text('quality');
+                const quality=document.createElement('select');quality.setAttribute('aria-label',text('quality'));
+                [[256,'light'],[512,'balanced'],[1024,'detail']].forEach(([value,key])=>{const o=document.createElement('option');o.value=value;o.textContent=text(key);quality.append(o);});quality.value=config.DYE_RESOLUTION;
+                quality.addEventListener('change',()=>{config.DYE_RESOLUTION=Number(quality.value);initFramebuffers();});qualityLabel.append(quality);panel.append(qualityLabel);
+                const clear=document.createElement('button');clear.className='pc-text-action pc-destructive';clear.textContent=text('clear');clear.addEventListener('click',()=>{if(confirm(text('clearPrompt'))){studio.clear();closePanel();}});panel.append(clear);
+            }
         }
-        const about = document.createElement('button'); about.textContent = text('about'); about.className = 'android-about-link';
-        about.addEventListener('click', () => { closeSettings(); document.querySelector('.ebru-app-about').click(); }); panel.append(about);
+        if(mode==='all'){
+            sectionTitle('preferences');
+            const locale=document.createElement('div');locale.className='pc-inline-setting';const localeTitle=document.createElement('span');localeTitle.textContent=text('language');locale.append(localeTitle,language);panel.append(locale);
+            const guide=document.createElement('button');guide.className='pc-text-action';guide.textContent=text('help');guide.addEventListener('click',()=>{closePanel();helpButton.click();});panel.append(guide);
+            const about=document.createElement('button');about.className='pc-text-action';about.textContent=text('about');about.addEventListener('click',()=>{closePanel();document.querySelector('.ebru-app-about').click();});panel.append(about);
+        }
     }
-    renderSettings();
+    function openPanel(mode){
+        const same=!panel.hidden&&panel.dataset.mode===mode;closeAll();if(same)return;
+        renderPanel(mode);panel.hidden=false;(mode==='paint'?paint:mode==='water'?water:settings).setAttribute('aria-expanded','true');
+    }
+    settings.addEventListener('click',()=>openPanel('all'));paint.addEventListener('click',()=>openPanel('paint'));water.addEventListener('click',()=>openPanel('water'));
 
-    const palette = document.querySelector('.ebru-color-palette');
-    if (palette) {
-        const edit = button(text('colors'), 'colors'); edit.className = 'android-palette-edit'; edit.setAttribute('aria-expanded', 'false');
-        palette.querySelector('.ebru-palette-row').append(edit);
-        edit.addEventListener('click', () => {
-            const open = palette.classList.toggle('android-editing-colors');
-            edit.setAttribute('aria-expanded', String(open));
-        });
-        document.querySelector('body > canvas')?.addEventListener('pointerdown', () => {
-            closeSettings(); palette.classList.remove('android-editing-colors'); edit.setAttribute('aria-expanded', 'false');
-        }, { passive: true });
+    if(palette){
+        palette.id='pc-colors';palette.classList.add('pc-panel');
+        const head=document.createElement('header');const title=document.createElement('h2');title.textContent=text('colors');title.dataset.pcText='colors';
+        const close=makeButton(text('close'),'close');close.addEventListener('click',closeColors);head.append(title,close);palette.prepend(head);
+        const custom=palette.querySelector('.ebru-custom-color-label');const customText=custom?.querySelector('span');
+        if(custom){custom.innerHTML=svg('picker');if(customText)custom.append(customText);}
+        color.addEventListener('click',()=>{const open=document.body.classList.contains('pc-colors-open');closeAll();if(!open){document.body.classList.add('pc-colors-open');color.setAttribute('aria-expanded','true');}});
+    } else color.disabled=true;
+    function syncColor(){const hex=getComputedStyle(root).getPropertyValue('--ebru-paint-color').trim()||'#c94b3c';color.style.backgroundColor=hex;color.title=text('colors')+' · '+hex.toUpperCase();}
+    new MutationObserver(syncColor).observe(root,{attributes:true,attributeFilter:['style']});syncColor();
+
+    const rail=document.createElement('aside');rail.className='pc-sidebar';rail.setAttribute('aria-label',tr()?'Hızlı ayarlar':'Quick adjustments');
+    if(studio){
+        const addRail=(key,property,min,max,step)=>{
+            const row=document.createElement('label');row.className='pc-rail-control';
+            const name=document.createElement('span');name.className='pc-sr-only';name.textContent=text(key);name.dataset.pcText=key;
+            const input=document.createElement('input');input.type='range';input.min=min;input.max=max;input.step=step;input.value=config[property];input.setAttribute('aria-label',text(key));input.dataset.pcKey=key;
+            input.addEventListener('input',()=>{config[property]=Number(input.value);bubble.textContent=text(key)+' '+Number(input.value).toFixed(step<1?2:0);bubble.hidden=false;});
+            ['pointerup','pointercancel','blur','change'].forEach(event=>input.addEventListener(event,()=>{bubble.hidden=true;}));
+            railInputs[property]=input;row.append(name,input);rail.append(row);
+        };
+        const bubble=document.createElement('output');bubble.className='pc-rail-value';bubble.hidden=true;rail.append(bubble);
+        addRail('size','DROP_SIZE',25,200,5);rail.append(pause);addRail('radius','SPLAT_RADIUS',.01,1,.01);updatePause();document.body.append(rail);
     }
-    const dialog = document.querySelector('.ebru-app-dialog');
-    if (dialog) {
-        new MutationObserver(() => {
-            const video = dialog.querySelector(':scope > video');
-            dialog.classList.toggle('android-video-dialog', !!dialog.querySelector('video'));
-            const credits = dialog.querySelector('.ebru-credits'); if (credits?.textContent.includes('Ebrusim 1.0.0')) credits.textContent = credits.textContent.replace('Ebrusim 1.0.0', 'Ebrusim 1.1.0');
-            if (!video) return;
-            const layout = document.createElement('div'); layout.className = 'android-video-layout';
-            const preview = document.createElement('div'); preview.className = 'android-video-surface'; preview.append(video);
-            const actions = document.createElement('section'); actions.className = 'android-video-actions';
-            Array.from(dialog.children).filter(el => el.tagName !== 'HEADER').forEach(el => actions.append(el));
-            layout.append(preview, actions); dialog.append(layout);
-        }).observe(dialog, { childList: true });
-        new MutationObserver(() => { if (dialog.open) closeSettings(); }).observe(dialog, { attributes: true, attributeFilter: ['open'] });
+    const syncHidden=()=>{
+        const hidden=document.body.classList.contains('ebru-ui-hidden');
+        if(hidden)closeAll();
+        if(toggle){toggle.innerHTML=svg(hidden?'restore':'fullscreen');toggle.classList.toggle('pc-restore',hidden);if(hidden)document.body.append(toggle);else tools.insertBefore(toggle,color);}
+    };
+    new MutationObserver(syncHidden).observe(document.body,{attributes:true,attributeFilter:['class']});
+    syncHidden();
+    document.querySelector('body > canvas')?.addEventListener('pointerdown',closeAll,{passive:true});
+    window.addEventListener('keydown',event=>{if(event.key==='Escape')closeAll();});
+    const dialog=document.querySelector('.ebru-app-dialog');
+    if(dialog){
+        new MutationObserver(()=>{
+            const video=dialog.querySelector(':scope > video');dialog.classList.toggle('pc-video-dialog',!!dialog.querySelector('video'));
+            const credits=dialog.querySelector('.ebru-credits');if(credits?.textContent.includes('Ebrusim 1.0.0'))credits.textContent=credits.textContent.replace('Ebrusim 1.0.0','Ebrusim 1.2.0');
+            if(!video)return;
+            const layout=document.createElement('div');layout.className='pc-video-layout';const media=document.createElement('div');media.className='pc-video-surface';media.append(video);
+            const actions=document.createElement('section');actions.className='pc-video-actions';Array.from(dialog.children).filter(el=>el.tagName!=='HEADER').forEach(el=>actions.append(el));
+            layout.append(media,actions);dialog.append(layout);
+        }).observe(dialog,{childList:true});
+        new MutationObserver(()=>{if(dialog.open)closeAll();}).observe(dialog,{attributes:true,attributeFilter:['open']});
     }
-    // Preserve Android's Back behavior for the redesigned settings panel.
-    const originalBack = window.EbruNative.closeOverlay;
-    window.EbruNative.closeOverlay = () => { if (!panel.hidden) { closeSettings(); return true; } return originalBack?.() || false; };
-    window.addEventListener('ebru-language-change', () => {
-        settingsButton.setAttribute('aria-label', text('settings')); settingsButton.title = text('settings');
-        panel.setAttribute('aria-label', text('settings')); renderSettings();
-        const edit = document.querySelector('.android-palette-edit'); if (edit) edit.setAttribute('aria-label', text('colors'));
+    const originalBack=EbruNative.closeOverlay;
+    EbruNative.closeOverlay=()=>{if(!panel.hidden||document.body.classList.contains('pc-colors-open')){closeAll();return true;}return originalBack?.()||false;};
+    window.addEventListener('ebru-language-change',()=>{
+        closeAll();label(settings,'settings');label(paint,'paint');label(water,'water');label(color,'colors');label(pause,'paused');
+        rail.querySelectorAll('[data-pcText]').forEach(el=>{el.textContent=text(el.dataset.pcText);});
+        rail.querySelectorAll('[data-pcKey]').forEach(el=>{el.setAttribute('aria-label',text(el.dataset.pcKey));});
+        palette?.querySelectorAll('[data-pcText]').forEach(el=>{el.textContent=text(el.dataset.pcText);});syncColor();
     });
 })();

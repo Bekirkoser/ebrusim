@@ -1,7 +1,7 @@
 # Ebrusim Android — ilk sürüm
 
 Android uygulaması `android/` klasöründedir. İnternet bağlantısı olmadan çalışır;
-ebrusim.art sitesini açmaz. Paket kimliği `art.ebrusim.app`, sürüm `1.1.0` (2).
+ebrusim.art sitesini açmaz. Paket kimliği `art.ebrusim.app`, sürüm `1.2.0` (3).
 Android 8.0+ ve OpenGL ES 3 destekli cihazlar hedeflenir; target/compile SDK 36.
 
 ## Telefonunda denemek
@@ -104,3 +104,21 @@ Android Gradle Plugin: https://developer.android.com/build/releases/agp-8-13-0-r
 Debug APK, `art.ebrusim.app.landscape` kimliği ve **Ebrusim Yatay** adıyla ayrı kurulur. Eski test uygulaması ve galerisi silinmez. Önceki çalışmalar eski uygulamada kalır; yeni test uygulamasına otomatik taşınmaz. Release AAB asıl `art.ebrusim.app` kimliğini kullanır.
 
 Arayüz değişiklikleri `android-ui/` klasöründedir; iPhone projesi ve ortak mobil arayüz dosyaları değiştirilmez.
+
+## 1.2.0 çizim stüdyosu arayüzü
+
+Procreate'in resmi koyu arayüzü referans alınarak Android sunumu yenilendi:
+- Düz, tam genişlikte antrasit üst araç çubuğu; solda Galeri ve dışa aktarma.
+- Koyu gri çalışma zemini içinde beyaz, kenarları net bir tuval.
+- Solda damla boyutu ve etki alanı için dikey sürgüler; ortada suyu duraklat.
+- Sağ üstteki renk dairesi renk panelini açar. Renk paleti tuvali sürekli kaplamaz.
+- Damla ve akış simgeleri kendi ayar panellerini açar.
+- Sağ üstteki dört köşe simgesi arayüzü gizler; gizliyken sol üstteki simge geri açar.
+- Dil, kullanım yönergeleri ve kağıt rengi İşlemler (anahtar) menüsündedir.
+
+Debug uygulaması **Ebrusim Studio** (`art.ebrusim.app.studio`) olarak ayrı kurulur;
+önceki test uygulamaları ve galerileri yerinde kalır. Çalışmalar otomatik taşınmaz.
+Üretim paket kimliği `art.ebrusim.app` olarak korunur. iPhone dosyaları değiştirilmez.
+
+Görsel referans: https://help.procreate.com/procreate/handbook/interface-gestures/interface
+Referansın illüstrasyonu veya ürün simgeleri uygulamaya eklenmemiştir.
