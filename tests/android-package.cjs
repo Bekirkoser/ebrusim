@@ -15,6 +15,9 @@ for (const match of html.matchAll(/(?:src|href)="([^"#]+)"/g)) {
     if (file.startsWith('http')) continue;
     assert.ok(fs.existsSync(path.join(root, file)), 'Bundled asset missing: ' + file);
 }
+for (const file of ['android-ui/fonts/InterVariable.woff2', 'android-ui/fonts/Inter-LICENSE.txt']) {
+    assert.deepEqual(fs.readFileSync(path.join(root, file)), fs.readFileSync(file), 'Offline font asset must match source: ' + file);
+}
 const manifest = fs.readFileSync('android/app/src/main/AndroidManifest.xml', 'utf8');
 assert.doesNotMatch(manifest, /<uses-permission/);
 assert.match(manifest, /android:screenOrientation="sensorLandscape"/);

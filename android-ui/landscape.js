@@ -10,13 +10,13 @@
     };
     const text = key => words[tr() ? 'tr' : 'en'][key];
     const icons = {
-        gallery:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="m4 17 5-5 4 4 3-3 4 4"/>',
+        gallery:'<rect x="3" y="3" width="7" height="7" rx="1.8"/><rect x="14" y="3" width="7" height="7" rx="1.8"/><rect x="3" y="14" width="7" height="7" rx="1.8"/><rect x="14" y="14" width="7" height="7" rx="1.8"/>',
         save:'<path d="M12 3v12m-4-4 4 4 4-4M5 17v4h14v-4"/>',
         share:'<path d="M12 15V3m-4 4 4-4 4 4M5 11v10h14V11"/>',
         record:'<rect x="3" y="6" width="12" height="12" rx="2"/><path d="m15 10 6-3v10l-6-3"/>',
-        settings:'<path d="M14 6a5 5 0 0 0-6 6l-5 5a2 2 0 0 0 4 4l5-5a5 5 0 0 0 6-6l-3 3-4-4 3-3Z"/>',
+        settings:'<path d="M4 6h3m6 0h7M4 18h7m6 0h3M10 3v6M14 15v6"/><path d="M4 12h10m4 0h2"/><circle cx="16" cy="12" r="2"/>',
         paint:'<path d="M12 2C9 7 5 10 5 15a7 7 0 0 0 14 0c0-5-4-8-7-13Z"/><path d="M8 15c0 2 1 3 3 3"/>',
-        water:'<path d="M2 6c4-4 6 4 10 0s6 4 10 0M2 12c4-4 6 4 10 0s6 4 10 0M2 18c4-4 6 4 10 0s6 4 10 0"/>',
+        water:'<path d="M3 8c3-5 6 5 9 0s6 5 9 0M3 16c3-5 6 5 9 0s6 5 9 0"/>',
         close:'<path d="m6 6 12 12M18 6 6 18"/>',
         fullscreen:'<path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/>',
         restore:'<path d="M3 8h5V3M21 8h-5V3M8 21v-5H3M16 21v-5h5"/>',
@@ -24,7 +24,7 @@
         play:'<path d="m8 5 11 7-11 7Z"/>',
         picker:'<path d="m15 3 6 6-3 3-6-6 3-3ZM12 8l-8 8-1 5 5-1 8-8"/>'
     };
-    const svg = key => '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+icons[key]+'</svg>';
+    const svg = key => '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+icons[key]+'</svg>';
     const makeButton = (label, icon, className='') => {
         const el=document.createElement('button'); el.type='button'; el.className=className;
         el.setAttribute('aria-label',label); el.title=label; el.innerHTML=svg(icon); return el;
@@ -39,7 +39,8 @@
     const bar=document.createElement('header'); bar.className='pc-toolbar';
     const actions=document.querySelector('.ebru-app-toolbar');
     const tools=document.createElement('nav'); tools.className='pc-tools'; tools.setAttribute('aria-label',tr()?'Boyama araçları':'Painting tools');
-    bar.append(actions,tools); document.body.append(bar);
+    const brand=document.createElement('span');brand.className='pc-brand';brand.textContent='Ebrusim';
+    bar.append(actions,brand,tools); document.body.append(bar);
     function decorate(el) {
         const key=el.dataset.mobileKey; if(!icons[key])return;
         const label=el.textContent; el.title=label; el.setAttribute('aria-label',label);
@@ -71,12 +72,19 @@
     let railInputs={};
     function label(el,key){el.setAttribute('aria-label',text(key));el.title=text(key);}
     function sectionTitle(key){const title=document.createElement('h3');title.textContent=text(key);panel.append(title);}
+    function syncRange(input){
+        const min=Number(input.min),max=Number(input.max),value=Number(input.value);
+        const progress=max>min?Math.max(0,Math.min(100,(value-min)/(max-min)*100)):0;
+        input.style.setProperty('--pc-fill',progress+'%');
+        const output=input.closest('label')?.querySelector('.pc-rail-readout');
+        if(output)output.textContent=(input.dataset.pcProperty==='DROP_SIZE'?Math.round(value):Math.round(value*100))+'%';
+    }
     function range(key,property,min,max,step){
         const row=document.createElement('label');row.className='pc-setting-row';
         const heading=document.createElement('div');const name=document.createElement('span');name.textContent=text(key);
         const value=document.createElement('output');value.textContent=config[property];heading.append(name,value);
-        const input=document.createElement('input');input.type='range';input.min=min;input.max=max;input.step=step;input.value=config[property];input.dataset.pcProperty=property;input.setAttribute('aria-label',text(key));
-        input.addEventListener('input',()=>{config[property]=Number(input.value);value.textContent=input.value;if(railInputs[property])railInputs[property].value=input.value;});
+        const input=document.createElement('input');input.type='range';input.min=min;input.max=max;input.step=step;input.value=config[property];input.dataset.pcProperty=property;input.setAttribute('aria-label',text(key));syncRange(input);
+        input.addEventListener('input',()=>{config[property]=Number(input.value);value.textContent=input.value;syncRange(input);if(railInputs[property]){railInputs[property].value=input.value;syncRange(railInputs[property]);}});
         row.append(heading,input);panel.append(row);
     }
     const pause=makeButton(text('paused'),'pause','pc-pause');
@@ -117,12 +125,13 @@
     if(palette){
         palette.id='pc-colors';palette.classList.add('pc-panel');
         const head=document.createElement('header');const title=document.createElement('h2');title.textContent=text('colors');title.dataset.pcText='colors';
-        const close=makeButton(text('close'),'close');close.addEventListener('click',closeColors);head.append(title,close);palette.prepend(head);
+        const close=makeButton(text('close'),'close');close.addEventListener('click',closeColors);const hex=document.createElement('output');hex.className='pc-color-hex';
+        head.append(title,hex,close);palette.prepend(head);
         const custom=palette.querySelector('.ebru-custom-color-label');const customText=custom?.querySelector('span');
         if(custom){custom.innerHTML=svg('picker');if(customText)custom.append(customText);}
         color.addEventListener('click',()=>{const open=document.body.classList.contains('pc-colors-open');closeAll();if(!open){document.body.classList.add('pc-colors-open');color.setAttribute('aria-expanded','true');}});
     } else color.disabled=true;
-    function syncColor(){const hex=getComputedStyle(root).getPropertyValue('--ebru-paint-color').trim()||'#c94b3c';color.style.backgroundColor=hex;color.title=text('colors')+' · '+hex.toUpperCase();}
+    function syncColor(){const hex=getComputedStyle(root).getPropertyValue('--ebru-paint-color').trim()||'#c94b3c';color.style.setProperty('--chosen-color',hex);const code=palette?.querySelector('.pc-color-hex');if(code)code.textContent=hex.toUpperCase();color.title=text('colors')+' · '+hex.toUpperCase();}
     new MutationObserver(syncColor).observe(root,{attributes:true,attributeFilter:['style']});syncColor();
 
     const rail=document.createElement('aside');rail.className='pc-sidebar';rail.setAttribute('aria-label',tr()?'Hızlı ayarlar':'Quick adjustments');
@@ -131,9 +140,10 @@
             const row=document.createElement('label');row.className='pc-rail-control';
             const name=document.createElement('span');name.className='pc-sr-only';name.textContent=text(key);name.dataset.pcText=key;
             const input=document.createElement('input');input.type='range';input.min=min;input.max=max;input.step=step;input.value=config[property];input.dataset.pcProperty=property;input.setAttribute('aria-label',text(key));input.dataset.pcKey=key;
-            input.addEventListener('input',()=>{config[property]=Number(input.value);panel.querySelectorAll('[data-pc-property="'+property+'"]').forEach(field=>{field.value=input.value;const output=field.closest('label').querySelector('output');if(output)output.textContent=input.value;});bubble.textContent=text(key)+' '+Number(input.value).toFixed(step<1?2:0);bubble.hidden=false;});
+            const readout=document.createElement('output');readout.className='pc-rail-readout';
+            input.addEventListener('input',()=>{config[property]=Number(input.value);syncRange(input);panel.querySelectorAll('[data-pc-property="'+property+'"]').forEach(field=>{field.value=input.value;syncRange(field);const output=field.closest('label').querySelector('output');if(output)output.textContent=input.value;});bubble.textContent=text(key)+' '+Number(input.value).toFixed(step<1?2:0);bubble.hidden=false;});
             ['pointerup','pointercancel','blur','change'].forEach(event=>input.addEventListener(event,()=>{bubble.hidden=true;}));
-            railInputs[property]=input;row.append(name,input);rail.append(row);
+            railInputs[property]=input;row.append(name,readout,input);rail.append(row);syncRange(input);
         };
         const bubble=document.createElement('output');bubble.className='pc-rail-value';bubble.hidden=true;rail.append(bubble);
         addRail('size','DROP_SIZE',25,200,5);rail.append(pause);addRail('radius','SPLAT_RADIUS',.01,1,.01);updatePause();document.body.append(rail);
@@ -151,7 +161,7 @@
     if(dialog){
         new MutationObserver(()=>{
             const video=dialog.querySelector(':scope > video');dialog.classList.toggle('pc-video-dialog',!!dialog.querySelector('video'));
-            const credits=dialog.querySelector('.ebru-credits');if(credits?.textContent.includes('Ebrusim 1.0.0'))credits.textContent=credits.textContent.replace('Ebrusim 1.0.0','Ebrusim 1.2.0');
+            const credits=dialog.querySelector('.ebru-credits');if(credits?.textContent.includes('Ebrusim 1.0.0'))credits.textContent=credits.textContent.replace('Ebrusim 1.0.0','Ebrusim 1.3.0');
             if(!video)return;
             const layout=document.createElement('div');layout.className='pc-video-layout';const media=document.createElement('div');media.className='pc-video-surface';media.append(video);
             const actions=document.createElement('section');actions.className='pc-video-actions';Array.from(dialog.children).filter(el=>el.tagName!=='HEADER').forEach(el=>actions.append(el));

@@ -1,7 +1,7 @@
 # Ebrusim Android — ilk sürüm
 
 Android uygulaması `android/` klasöründedir. İnternet bağlantısı olmadan çalışır;
-ebrusim.art sitesini açmaz. Paket kimliği `art.ebrusim.app`, sürüm `1.2.0` (3).
+ebrusim.art sitesini açmaz. Paket kimliği `art.ebrusim.app`, sürüm `1.3.0` (4).
 Android 8.0+ ve OpenGL ES 3 destekli cihazlar hedeflenir; target/compile SDK 36.
 
 ## Telefonunda denemek
@@ -78,10 +78,10 @@ kaybolabilir. Çıkmadan önce Kaydet'e bas. Uygulamayı kaldırmak kayıtları 
 ## Yayından önce cihaz kontrolü
 
 - Küçük telefon, büyük telefon ve tablette yatay görünüm; telefonu iki yöne çevir.
-- Üst araç çubuğu, alttaki sürekli açık renk paleti ve sağdan açılan ayarlar.
+- Üst araç çubuğu, sol sürgüler, renk düğmesi ve açılan ayar panelleri.
 - Video önizlemesinde solda video, sağda paylaş/kaydet; kısa ekranda taşma olmaması.
 - Parmağın/kalemin kısa dokunması, sürükleme, çoklu dokunma ve kesilen hareket.
-- Renk seçimi, palette yatay kaydırma, ayarlar, panelleri gizleme/gösterme.
+- Renk seçimi, renk panelini kaydırma, ayarlar, panelleri gizleme/gösterme.
 - Kaydet → Çalışmalarım → uygulamayı kapat/aç → görüntünün kaldığını doğrula.
 - PNG paylaşımı ve cihaza kaydetme; dosya seçicisinde iptal ve dolu disk davranışı.
 - Video başlat/durdur, 45 saniye sınırı, desteklenmeyen cihaz, uygulamayı arka plana al.
@@ -122,3 +122,14 @@ Debug uygulaması **Ebrusim Studio** (`art.ebrusim.app.studio`) olarak ayrı kur
 
 Görsel referans: https://help.procreate.com/procreate/handbook/interface-gestures/interface
 Referansın illüstrasyonu veya ürün simgeleri uygulamaya eklenmemiştir.
+
+## 1.3.0 arayüz yenilemesi
+
+- İnternetsiz çalışan Inter değişken yazı tipi; lisansı `android-ui/fonts/` içinde.
+- Daha rahat dokunulan araçlar, güncellenmiş simgeler, sade seçim vurguları.
+- Değer ve doluluk gösteren ince sürgüler; eşit aralıklı renk hücreleri, seçili renk kodu.
+- Yuvarlatılmış ayar panelleri, galeri ve dışa aktarma pencereleri.
+
+Debug APK **Ebrusim Preview** (`art.ebrusim.app.preview`) adıyla ayrı kurulur. Önceki uygulamaları kaldırmak gerekmez; eski çalışmalar o uygulamalarda kalır, otomatik taşınmaz. CI debug imzasını Actions önbelleğinde saklar; önbellek korunduğu sürece sonraki Preview paketleri aynı uygulamayı güncelleyebilir. Üretim için ayrı, kalıcı release imzası gerekir.
+
+iPhone ve ortak mobil dosyalar bu yenilemede değiştirilmemiştir.
